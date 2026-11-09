@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#232120">
+  <meta name="description" content="Munshi is a voice-first AI assistant that lets small business owners in India run their books by talking, in English, Hindi or Hinglish.">
+  <title>Munshi · Run your shop by talking to it</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#try">Skip to the live assistant</a>
+
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="logo" href="#top" aria-label="Munshi home">
+        <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        Munshi
+      </a>
+      <nav class="nav-links" aria-label="Sections">
+        <a href="#try-section">Try it</a>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#who">Who it's for</a>
+        <a href="#tech">Under the hood</a>
+      </nav>
+      <a class="button button-blue button-small" href="#try">Try it live</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="stage">
+      <canvas id="scene" aria-hidden="true"></canvas>
+
+      <section class="hero">
+        <div class="wrap hero-inner">
+          <div class="hero-copy">
+            <p class="eyebrow hero-rise" style="--i: 0">Voice-first AI for small business</p>
+            <h1>
+              <span class="hero-rise" style="--i: 1">Run your shop</span>
+              <span class="hero-rise" style="--i: 2">by <em>talking</em></span>
+              <span class="hero-rise" style="--i: 3">to it.</span>
+            </h1>
+            <p class="lede hero-rise" style="--i: 4">No registers. No forms. No dashboards to learn. Just say what happened, and Munshi keeps the books, tracks every rupee of udhaar and tells you how business is going.</p>
+            <div class="hero-actions hero-rise" style="--i: 5">
+              <a class="button button-blue" href="#try">Talk to Munshi</a>
+              <a class="button button-ghost" href="#how">See how it works</a>
+            </div>
+            <ul class="langs hero-rise" style="--i: 6" aria-label="Languages">
+              <li>English</li>
+              <li>Hindi</li>
+              <li>Hinglish</li>
+            </ul>
+          </div>
+        </div>
+        <a class="scroll-cue" href="#try-section" aria-label="Scroll to the live assistant"><span></span></a>
+      </section>
+
+      <section class="try-section" id="try-section">
+        <div class="wrap try-grid">
+          <div class="try-copy">
+            <p class="eyebrow" data-reveal>Try it live</p>
+            <h2 class="section-title" data-reveal>Say it. Watch it get written.</h2>
+            <p class="try-lede" data-reveal>Every entry you make lands on the ledger's page, with a shower of coins. Tap the mic and the sound ring wakes up with you.</p>
+          </div>
+
+          <section class="console" id="try" aria-label="Live assistant">
+            <header class="console-top">
+              <div class="console-title">
+                <span class="live-dot" aria-hidden="true"></span>
+                <h3 id="business-name">Your shop</h3>
+              </div>
+              <div class="console-controls">
+                <div class="speech-toggle" role="group" aria-label="Language you will speak">
+                  <button type="button" data-speech="hinglish">Hinglish</button>
+                  <button type="button" data-speech="english">English</button>
+                </div>
+                <button type="button" id="sound" class="icon-button" aria-pressed="true">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4Z"/><path id="sound-waves" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path id="sound-off" hidden fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m15.5 9.5 5 5m0-5-5 5"/></svg>
+                </button>
+              </div>
+            </header>
+
+            <div class="glance" aria-label="Today at a glance">
+              <div class="tile"><span class="tile-label">Sales today</span><span class="tile-value" id="glance-sales">–</span></div>
+              <div class="tile"><span class="tile-label">Spent today</span><span class="tile-value" id="glance-expenses">–</span></div>
+              <div class="tile tile-due"><span class="tile-label">Udhaar due</span><span class="tile-value" id="glance-outstanding">–</span></div>
+            </div>
+            <p class="glance-extra" id="glance-extra" hidden></p>
+            <p class="demo-note" id="demo-note" hidden><strong>Demo mode.</strong> AI not connected, so only a few fixed phrases work.</p>
+
+            <div class="log" id="log" aria-live="polite">
+              <div class="welcome" id="welcome" hidden>
+                <p class="welcome-title">Namaste! What happened in the shop today?</p>
+                <div class="chips" id="chips"></div>
+              </div>
+            </div>
+
+            <footer class="console-dock" id="console-dock">
+              <p class="status" id="status" role="status"></p>
+              <div class="mic-row">
+                <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <button type="button" id="mic" class="mic" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>
+                </button>
+                <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              </div>
+              <form id="composer" class="composer">
+                <input id="input" type="text" autocomplete="off" maxlength="4000" enterkeyhint="send" placeholder="Or type here…" aria-label="Type a message">
+                <button type="submit" id="send" class="icon-button" aria-label="Send">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 20.5 21 12 4 3.5V10l10 2-10 2v6.5Z"/></svg>
+                </button>
+              </form>
+              <p class="voice-engine" id="voice-engine"></p>
+            </footer>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>"Ramesh ko 500 udhaar diya"</span><span>"Is hafte business kaisa raha?"</span><span>"Who owes me the most?"</span><span>"Kal 5 baje Asha ka haircut book karo"</span><span>"Paid 6,500 to the wholesaler"</span><span>"Sunita ne 200 de diye"</span>
+        <span>"Ramesh ko 500 udhaar diya"</span><span>"Is hafte business kaisa raha?"</span><span>"Who owes me the most?"</span><span>"Kal 5 baje Asha ka haircut book karo"</span><span>"Paid 6,500 to the wholesaler"</span><span>"Sunita ne 200 de diye"</span>
+      </div>
+    </div>
+
+    <section class="band band-sand" id="how">
+      <div class="wrap">
+        <p class="eyebrow" data-reveal>How it works</p>
+        <h2 class="section-title" data-reveal>One sentence in. A correct ledger entry out.</h2>
+        <ol class="flow">
+          <li class="flow-step tilt spot" data-reveal>
+            <span class="flow-num">1</span>
+            <h3>You say it</h3>
+            <p>However you'd tell your helper. Any mix of Hindi and English.</p>
+            <blockquote class="said">"Ramesh ko 500 udhaar diya"</blockquote>
+          </li>
+          <li class="flow-step tilt spot" data-reveal>
+            <span class="flow-num">2</span>
+            <h3>Munshi understands</h3>
+            <p>It works out who, how much and what kind of entry. If it isn't sure, it asks.</p>
+            <dl class="parsed">
+              <div><dt>Customer</dt><dd>Ramesh</dd></div>
+              <div><dt>Sale</dt><dd>₹500</dd></div>
+              <div><dt>Paid now</dt><dd>₹0</dd></div>
+            </dl>
+          </li>
+          <li class="flow-step tilt spot" data-reveal>
+            <span class="flow-num">3</span>
+            <h3>The books update</h3>
+            <p>Saved straight away and read back to you. Misheard? One tap undoes it.</p>
+            <div class="entry-sample">
+              <span>Sale ₹500 to Ramesh, ₹500 on udhaar</span>
+              <b>Undo</b>
+            </div>
+          </li>
+        </ol>
+        <button type="button" class="button button-charcoal" data-try="Ramesh ko 500 udhaar diya" data-reveal>Try this sentence live</button>
+      </div>
+    </section>
+
+    <section class="band band-charcoal">
+      <div class="wrap compare">
+        <div>
+          <p class="eyebrow" data-reveal>The difference</p>
+          <h2 class="section-title" data-reveal>Business software asks you to learn it. Munshi learns your business.</h2>
+        </div>
+        <div class="compare-table">
+          <div class="compare-col tilt" data-reveal>
+            <h3>Usual business software</h3>
+            <ol>
+              <li>Open the app</li>
+              <li>Find the right menu</li>
+              <li>Search for the customer</li>
+              <li>Fill in the form</li>
+              <li>Save it, in English</li>
+            </ol>
+          </div>
+          <div class="compare-col compare-col-blue tilt" data-reveal>
+            <h3>Munshi</h3>
+            <p class="compare-say">Just say it.</p>
+            <p>In the language you already think in, while your hands are busy with a customer.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-sand" id="features">
+      <div class="wrap">
+        <div class="board-head">
+          <div>
+            <p class="eyebrow" data-reveal>Features</p>
+            <h2 class="section-title" data-reveal>The whole shop, in one conversation.</h2>
+          </div>
+          <div class="board-tools" data-reveal>
+            <p class="drag-hint"><span aria-hidden="true" class="drag-hand"></span>These cards move. Drag them, or throw them.</p>
+            <button type="button" class="button button-line button-small" data-board-reset>Tidy up</button>
+          </div>
+        </div>
+        <div class="bento" data-board>
+          <article class="card card-wide card-charcoal movable spot" tabindex="0" data-rot="-0.7" data-reveal aria-label="Movable card: Udhaar that never gets lost">
+            <h3>Udhaar that never gets lost</h3>
+            <p>Know exactly who owes what, and who to call first.</p>
+            <ul class="owes">
+              <li><span>Ramesh Gupta</span><b>₹1,800</b></li>
+              <li><span>Imran Khan</span><b>₹1,250</b></li>
+              <li><span>Sunita Devi</span><b>₹1,000</b></li>
+            </ul>
+          </article>
+          <article class="card card-blue movable spot" tabindex="0" data-rot="1.4" data-reveal aria-label="Movable card: Answers, not charts">
+            <h3>Answers, not charts</h3>
+            <p class="quote">"Is hafte business kaisa raha?"</p>
+            <p>Sales, spending and top customers, compared with last period, spoken in plain words.</p>
+          </article>
+          <article class="card movable spot" tabindex="0" data-rot="0.9" data-reveal aria-label="Movable card: Remembers your business">
+            <h3>Remembers your business</h3>
+            <p>Customers, past transactions, your supplier's delivery day. You never start from zero.</p>
+          </article>
+          <article class="card movable spot" tabindex="0" data-rot="-1.2" data-reveal aria-label="Movable card: Orders and appointments">
+            <h3>Orders and appointments</h3>
+            <p>Book a haircut or take a tailoring order by voice. It warns you about double bookings.</p>
+          </article>
+          <article class="card movable spot" tabindex="0" data-rot="0.6" data-reveal aria-label="Movable card: Safe with your money">
+            <h3>Safe with your money</h3>
+            <p>Two customers called Ramesh? It asks which one. Every entry can be undone.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band band-charcoal" id="who">
+      <div class="wrap">
+        <div class="board-head">
+          <div>
+            <p class="eyebrow" data-reveal>Who it's for</p>
+            <h2 class="section-title" data-reveal>Built for people who run the counter themselves.</h2>
+          </div>
+          <div class="board-tools" data-reveal>
+            <p class="drag-hint"><span aria-hidden="true" class="drag-hand"></span>These move too. Try one.</p>
+            <button type="button" class="button button-line-sand button-small" data-board-reset>Tidy up</button>
+          </div>
+        </div>
+        <ul class="who" data-board>
+          <li class="photo photo-large movable" tabindex="0" data-reveal aria-label="Movable card: Kirana and daily needs">
+            <img src="https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, 600px" alt="A colourful stall of spices and dry goods at a New Delhi market" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Kirana and daily needs</h3>
+              <p class="photo-say">"Sharma ji ko 1,200 ka saaman udhaar"</p>
+              <a class="credit" href="https://www.pexels.com/photo/selection-of-spices-at-bazaar-17870116/" target="_blank" rel="noopener">Photo: Patricia Luquet / Pexels</a>
+            </div>
+          </li>
+          <li class="photo photo-large movable" tabindex="0" data-reveal aria-label="Movable card: Salons and parlours">
+            <img src="https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, 600px" alt="A hairstylist attending to a client in an elegant salon with mirrors and wooden decor" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Salons and parlours</h3>
+              <p class="photo-say">"Kal 11 baje Priya ka facial book karo"</p>
+              <a class="credit" href="https://www.pexels.com/photo/woman-standing-in-front-of-woman-sitting-on-chair-inside-room-1654834/" target="_blank" rel="noopener">Photo: Asad Photo Maldives / Pexels</a>
+            </div>
+          </li>
+          <li class="photo photo-small movable" tabindex="0" data-reveal aria-label="Movable card: Boutiques">
+            <img src="https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 300px" alt="A boutique displaying colourful traditional Indian clothing" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Boutiques</h3>
+              <p class="photo-say">"Asha ka lehenga Friday tak ready karna hai"</p>
+              <a class="credit" href="https://www.pexels.com/photo/traditional-clothes-on-market-8886949/" target="_blank" rel="noopener">Photo: Lara Jameson / Pexels</a>
+            </div>
+          </li>
+          <li class="photo photo-small movable" tabindex="0" data-reveal aria-label="Movable card: Restaurants and cafes">
+            <img src="https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 300px" alt="A modern cafe counter with geometric patterns and shelves of cups" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Restaurants and cafes</h3>
+              <p class="photo-say">"Aaj doodh pe 2,000 kharcha hua"</p>
+              <a class="credit" href="https://www.pexels.com/photo/view-of-a-cafe-counter-5864553/" target="_blank" rel="noopener">Photo: Rachel Claire / Pexels</a>
+            </div>
+          </li>
+          <li class="photo photo-small movable" tabindex="0" data-reveal aria-label="Movable card: Repair shops">
+            <img src="https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 300px" alt="A watchmaker repairing watches in an organised workshop" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Repair shops</h3>
+              <p class="photo-say">"Imran ki ghadi ready hai, mark kar do"</p>
+              <a class="credit" href="https://www.pexels.com/photo/watchmaker-working-in-a-watch-repair-shop-8327581/" target="_blank" rel="noopener">Photo: Tima Miroshnichenko / Pexels</a>
+            </div>
+          </li>
+          <li class="photo photo-small movable" tabindex="0" data-reveal aria-label="Movable card: Tailors and services">
+            <img src="https://images.pexels.com/photos/5830700/pexels-photo-5830700.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/5830700/pexels-photo-5830700.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/5830700/pexels-photo-5830700.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/5830700/pexels-photo-5830700.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 300px" alt="A tailor working at a sewing machine against a deep blue wall" loading="lazy" draggable="false">
+            <div class="photo-text">
+              <h3>Tailors and services</h3>
+              <p class="photo-say">"Who hasn't come in for a month?"</p>
+              <a class="credit" href="https://www.pexels.com/photo/fashion-designer-sitting-in-front-of-sewing-machine-5830700/" target="_blank" rel="noopener">Photo: Anna Shvets / Pexels</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="band band-sand" id="tech">
+      <div class="wrap">
+        <p class="eyebrow" data-reveal>Under the hood</p>
+        <h2 class="section-title" data-reveal>The AI talks. The ledger does the maths.</h2>
+        <ol class="pipeline" aria-label="How a message is processed">
+          <li class="tilt" data-reveal><b>Voice in</b><span>Gnani Prisma speech-to-text, primed with your customers' names</span></li>
+          <li class="tilt" data-reveal><b>AI agent</b><span>Claude with 18 business tools</span></li>
+          <li class="tilt" data-reveal><b>Ledger</b><span>SQLite, exact to the paisa</span></li>
+          <li class="tilt" data-reveal><b>Voice out</b><span>Gnani Timbre, in a natural Hinglish voice</span></li>
+        </ol>
+        <div class="tech-grid">
+          <div class="fact" data-reveal><h3>Figures come from tools</h3><p>Totals are calculated by the ledger and fetched through tools, and the assistant is told not to quote numbers from memory.</p></div>
+          <div class="fact" data-reveal><h3>Balances are always calculated</h3><p>Udhaar is worked out from the ledger each time, so it can't drift out of step.</p></div>
+          <div class="fact" data-reveal><h3>Refuses to guess</h3><p>Ambiguous names, future dates and payments from unknown customers go back as a question.</p></div>
+          <div class="fact" data-reveal><h3>Next on the roadmap</h3><p>Stock tracking, GST invoices, WhatsApp reminders and more Indian languages, which Gnani's speech models already cover.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
+      <div class="wrap closing-inner">
+        <h2 data-reveal>Your shop already talks. Now the books listen.</h2>
+        <a class="button button-sand" href="#try" data-reveal>Talk to Munshi</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="logo logo-small"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Munshi</span>
+      <span>Independent hackathon project for Gnani.ai, not an official Gnani.ai product. Sample shop data is made up. Photos from Pexels are illustrative; the people shown aren't connected with Munshi.</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/motion.js"></script>
+</body>
+</html>
