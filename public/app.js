@@ -50,8 +50,9 @@ let soundOn = store.get("sound", "on") !== "off";
 let busy = false;
 let speaking = false;
 let listening = false;
-let voiceEngine = "browser";
-const voiceAvailable = () => voiceEngine === "gnani" || Boolean(Recognition);
+let voiceEngine = "browser"; // who speaks replies: Gnani Timbre, or the browser
+let listenEngine = "browser"; // who hears the owner: Gnani Prisma, or the browser's recognition
+const voiceAvailable = () => listenEngine === "gnani" || Boolean(Recognition);
 
 /* ---------- Rendering ---------- */
 
@@ -558,16 +559,38 @@ function stopSpeaking() {
   speaking = false;
 }
 
+/** The line under the mic: who is listening and speaking, with a switch when both mics exist. */
+function renderVoiceEngine() {
+  const line = $("voice-engine");
+  const hearing = listenEngine === "gnani" ? "Mic: Gnani Prisma" : "Mic: your browser";
+  const speakingBy = voiceEngine === "gnani" ? "Voice: Gnani Timbre" : "Voice: your browser";
+  line.replaceChildren(`${hearing} · ${speakingBy}`);
+  if (voiceEngine === "gnani" && Recognition) {
+    const swap = document.createElement("button");
+    swap.type = "button";
+    swap.className = "engine-switch";
+    swap.textContent = listenEngine === "gnani" ? "Use browser mic instead" : "Use Gnani mic";
+    swap.addEventListener("click", () => {
+      if (listening) return;
+      listenEngine = listenEngine === "gnani" ? "browser" : "gnani";
+      store.set("listen", listenEngine);
+      renderVoiceEngine();
+      setStatus();
+    });
+    line.append(" · ", swap);
+  }
+}
+
 /* ---------- Wiring ---------- */
 
 els.mic.addEventListener("click", () => {
   if (listening) {
-    if (voiceEngine === "gnani") stopGnaniRecording();
+    if (listenEngine === "gnani") stopGnaniRecording();
     else recognition?.stop();
   } else if (speaking) {
     stopSpeaking();
     setStatus();
-  } else if (voiceEngine === "gnani") {
+  } else if (listenEngine === "gnani") {
     startGnaniRecording();
   } else {
     startListening();
@@ -663,7 +686,9 @@ async function init() {
     $("demo-note").hidden = !state.demo;
     // Gnani needs mic capture in the browser; without it, fall back to built-in speech.
     voiceEngine = state.voice === "gnani" && navigator.mediaDevices?.getUserMedia && window.AudioWorkletNode ? "gnani" : "browser";
-    $("voice-engine").textContent = voiceEngine === "gnani" ? "Voice by Gnani Prisma and Timbre" : "Voice by your browser. Add a Gnani key for Prisma and Timbre.";
+    // The mic can use Gnani or the browser's own recognition; the owner can switch if one struggles.
+    listenEngine = voiceEngine === "gnani" && !(store.get("listen", "gnani") === "browser" && Recognition) ? "gnani" : "browser";
+    renderVoiceEngine();
     setBusy(false);
     renderBusiness(state.business);
     renderGlance(state.glance);
