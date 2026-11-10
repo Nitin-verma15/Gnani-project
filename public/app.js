@@ -12,6 +12,7 @@ const COPY = {
   soundOn: "Spoken replies are on",
   soundOff: "Spoken replies are off",
   noSpeech: "Didn't catch that. Please try again.",
+  micSilent: "Mic se koi awaaz nahi aayi. Check the right microphone is selected and not muted, or type below.",
   micBlocked: "Microphone is blocked. Allow it in browser settings, or type below.",
   noMic: "Voice needs Chrome or Edge. You can type below.",
   speechFailed: "Couldn't make that out. Please type it.",
@@ -358,9 +359,15 @@ function startListening() {
 
 /* Gnani voice: records in the browser, sends WAV through our server, which holds the key. */
 
-const SILENCE_LEVEL = 0.012;
-const STOP_AFTER_SILENCE_MS = 1300;
-const GIVE_UP_WITHOUT_SPEECH_MS = 7000;
+// Speech is anything clearly louder than the room. The bar is set from the first moments
+// of each recording, so a quiet laptop mic and a noisy shop both work.
+const CALIBRATE_MS = 400;
+const SPEECH_OVER_NOISE = 2.6;
+const MIN_SPEECH_LEVEL = 0.004;
+const MAX_SPEECH_LEVEL = 0.009;
+const SILENT_MIC_LEVEL = 0.0015; // below this the mic is muted or the wrong device
+const STOP_AFTER_SILENCE_MS = 1400;
+const GIVE_UP_WITHOUT_SPEECH_MS = 8000;
 const MAX_RECORDING_MS = 28000; // Prisma's REST limit is 30 seconds
 let recording = null;
 
@@ -399,13 +406,20 @@ async function startGnaniRecording() {
   const rate = context.sampleRate;
   const startedAt = performance.now();
   let lastSoundAt = startedAt;
+  const roomLevels = [];
+  let speechLevel = MAX_SPEECH_LEVEL;
+  let peak = 0;
 
   session.finish = () => {
     if (session.stopped) return;
     session.stopped = true;
     const { chunks, heard } = session;
     cleanUp();
-    if (!heard) return setStatus(COPY.noSpeech);
+    els.wave.style.removeProperty("--lvl");
+    console.info(`Mic: loudest ${peak.toFixed(4)}, speech bar ${speechLevel.toFixed(4)}`);
+    if (!heard && peak < SILENT_MIC_LEVEL) return setStatus(COPY.micSilent);
+    // Even quiet sound goes to Gnani, which is better at telling speech from noise.
+    if (!heard && peak < MIN_SPEECH_LEVEL / 2) return setStatus(COPY.noSpeech);
     upload(encodeWav(downsample(mergeChunks(chunks), rate)));
   };
 
@@ -415,7 +429,20 @@ async function startGnaniRecording() {
     if (session.stopped) return;
     session.chunks.push(data);
     const now = performance.now();
-    if (rms(data) > SILENCE_LEVEL) {
+    const level = rms(data);
+    peak = Math.max(peak, level);
+    if (now - startedAt < CALIBRATE_MS) {
+      roomLevels.push(level);
+    } else if (roomLevels.length) {
+      // The quietest moments are the room; people often start talking straight away.
+      const sorted = roomLevels.sort((a, b) => a - b);
+      const room = sorted[Math.floor(sorted.length * 0.2)];
+      speechLevel = Math.min(MAX_SPEECH_LEVEL, Math.max(MIN_SPEECH_LEVEL, room * SPEECH_OVER_NOISE));
+      roomLevels.length = 0;
+    }
+    // The bars beside the mic follow your voice, so you can see it's listening.
+    els.wave.style.setProperty("--lvl", Math.min(1, level / (speechLevel * 2)).toFixed(2));
+    if (level > speechLevel && now - startedAt >= CALIBRATE_MS) {
       session.heard = true;
       lastSoundAt = now;
     }
