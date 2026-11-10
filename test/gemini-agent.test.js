@@ -8,7 +8,7 @@ import { createApp } from "../src/server.js";
 import { createGeminiClient, toGeminiTools, toGeminiContents, GeminiApiError, geminiFriendlyError } from "../src/gemini.js";
 
 /** A stand-in for Google's API: answers from a script and records every request. */
-function fakeGemini(responses) {
+function fakeGemini(responses, { retryDelays = [] } = {}) {
   const requests = [];
   const fetchImpl = async (url, init) => {
     requests.push({ url, headers: init.headers, body: JSON.parse(init.body) });
@@ -16,8 +16,25 @@ function fakeGemini(responses) {
     if (next.status) return new Response(JSON.stringify({ error: { message: next.message } }), { status: next.status });
     return new Response(JSON.stringify(next), { status: 200, headers: { "Content-Type": "application/json" } });
   };
-  return { requests, client: createGeminiClient({ apiKey: "test-key", model: "gemini-3.8-flash", fetchImpl }) };
+  return { requests, client: createGeminiClient({ apiKey: "test-key", model: "gemini-3.8-flash", fetchImpl, retryDelays }) };
 }
+
+test("a busy Gemini is tried again before giving up, and then explained plainly", async () => {
+  const db = openDb(":memory:");
+  const tools = createTools(db);
+  const busy = { status: 503, message: "This model is currently experiencing high demand." };
+  const { client, requests } = fakeGemini([busy, busy, reply([{ text: "Ho gaya." }])], { retryDelays: [1, 1] });
+  assert.equal((await runTurn({ db, client, tools, text: "hi" })).reply, "Ho gaya.");
+  assert.equal(requests.length, 3);
+
+  const stillBusy = fakeGemini([busy, busy, busy], { retryDelays: [1, 1] });
+  await assert.rejects(runTurn({ db, client: stillBusy.client, tools, text: "hi" }), (err) => err.status === 503);
+  assert.match(geminiFriendlyError(new GeminiApiError(503, "busy")), /busy/);
+
+  const noKey = fakeGemini([{ status: 400, message: "API key not valid." }], { retryDelays: [1, 1] });
+  await assert.rejects(runTurn({ db, client: noKey.client, tools, text: "hi" }), (err) => err.status === 400);
+  assert.equal(noKey.requests.length, 1, "a bad key isn't retried");
+});
 
 const reply = (parts, finishReason = "STOP") => ({ candidates: [{ content: { role: "model", parts }, finishReason }] });
 

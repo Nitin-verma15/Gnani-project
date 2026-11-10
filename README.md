@@ -32,7 +32,7 @@ To go live, create a `.env` file from `.env.example`, add a key and restart. The
 
 | Key | Powers | Get it from | Cost |
 |---|---|---|---|
-| `GEMINI_API_KEY` | The assistant, on Google Gemini (`gemini-3.8-flash` by default) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Free tier, with rate limits. On the free tier Google may use requests to improve its products. |
+| `GEMINI_API_KEY` | The assistant, on Google Gemini (`gemini-3.5-flash-lite` by default) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Free tier, with rate limits. On the free tier Google may use requests to improve its products. |
 | `ANTHROPIC_API_KEY` | The assistant, on Claude | [console.anthropic.com](https://console.anthropic.com) | Paid, per use |
 | `GNANI_API_KEY` | Voice in and out ([Gnani](https://docs.gnani.ai/api/introduction/introduction) Prisma and Timbre) | [app.gnani.ai/voice](https://app.gnani.ai/voice/) | Optional; without it the browser's built-in speech is used |
 
@@ -45,7 +45,7 @@ Other settings, all optional:
 | `MUNSHI_PIN` | Locks the app behind a PIN (at least 4 characters). Needed before opening it to other devices. |
 | `MUNSHI_HOST` | Where the server listens. Default `127.0.0.1` (this computer only). Set `0.0.0.0` to reach it from a phone on the same Wi-Fi; the server refuses to start that way without `MUNSHI_PIN`. |
 | `MUNSHI_PROVIDER` | `gemini` or `claude`, when both keys are set. |
-| `GEMINI_MODEL`, `GEMINI_THINKING` | Gemini model (default `gemini-3.8-flash`; `gemini-3.5-flash-lite` is faster) and thinking level (`minimal`, `low`, `medium`, `high`). |
+| `GEMINI_MODEL`, `GEMINI_THINKING` | Gemini model (default `gemini-3.5-flash-lite`; `gemini-3.8-flash` is newer but was often overloaded in testing) and thinking level (`minimal`, `low`, `medium`, `high`). |
 | `MUNSHI_MODEL`, `MUNSHI_EFFORT` | Claude model and effort (`low`, `medium`, `high`, `xhigh`, `max`). An invalid effort falls back to `medium` with a warning. |
 | `MUNSHI_DB`, `MUNSHI_BACKUP_DIR` | Where the database and its daily backups live. Default `data/munshi.db` and `data/backups/`. |
 | `PORT` | Default 3000. |

@@ -5,7 +5,12 @@
 // this file translates it to Gemini's on every call.
 // Reference: https://aistudio.google.com/api-reference/generate-content/generate-content.md
 
-export const GEMINI_DEFAULT_MODEL = "gemini-3.8-flash";
+// Flash-Lite is Google's stable, fastest free-tier model. gemini-3.8-flash is newer but
+// was often overloaded (503) in testing; choose it with GEMINI_MODEL if you prefer.
+export const GEMINI_DEFAULT_MODEL = "gemini-3.5-flash-lite";
+// Busy or briefly failing servers get two more tries, after these waits.
+const RETRY_DELAYS_MS = [1500, 4000];
+const RETRYABLE = new Set([500, 502, 503, 504]);
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 const TIMEOUT_MS = 90_000;
 const THINKING_LEVELS = ["MINIMAL", "LOW", "MEDIUM", "HIGH"];
@@ -121,7 +126,7 @@ export function fromGeminiResponse(body, nextId) {
   return { stop_reason, content };
 }
 
-export function createGeminiClient({ apiKey, model = GEMINI_DEFAULT_MODEL, thinking = null, baseUrl = BASE_URL, fetchImpl = fetch }) {
+export function createGeminiClient({ apiKey, model = GEMINI_DEFAULT_MODEL, thinking = null, baseUrl = BASE_URL, fetchImpl = fetch, retryDelays = RETRY_DELAYS_MS }) {
   let counter = 0;
   const nextId = () => `gemini_${Date.now().toString(36)}_${++counter}`;
   const level = thinking && THINKING_LEVELS.includes(thinking.toUpperCase()) ? thinking.toUpperCase() : null;
@@ -144,24 +149,29 @@ export function createGeminiClient({ apiKey, model = GEMINI_DEFAULT_MODEL, think
       tools: toGeminiTools(params.tools ?? []),
       generationConfig: { maxOutputTokens: params.max_tokens ?? 16000, ...(level ? { thinkingConfig: { thinkingLevel: level } } : {}) },
     };
-    let res;
-    try {
-      res = await fetchImpl(`${baseUrl}/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-    } catch (err) {
-      throw new GeminiApiError(0, err.message);
-    }
-    if (!res.ok) {
+    for (let attempt = 0; ; attempt++) {
+      let res;
+      try {
+        res = await fetchImpl(`${baseUrl}/models/${encodeURIComponent(model)}:generateContent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+      } catch (err) {
+        throw new GeminiApiError(0, err.message);
+      }
+      if (res.ok) return fromGeminiResponse(await res.json(), nextId);
       const text = await res.text();
       let detail = text.slice(0, 400);
       try { detail = JSON.parse(text).error?.message ?? detail; } catch { /* keep the raw text */ }
+      if (RETRYABLE.has(res.status) && attempt < retryDelays.length) {
+        console.warn(`Gemini ${res.status}, trying again in ${retryDelays[attempt] / 1000}s: ${detail}`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+        continue;
+      }
       throw new GeminiApiError(res.status, detail);
     }
-    return fromGeminiResponse(await res.json(), nextId);
   }
 
   return {
@@ -197,6 +207,7 @@ export function geminiFriendlyError(err) {
     return "Gemini API key sahi nahi hai. The Gemini key isn't working; check GEMINI_API_KEY in .env.";
   }
   if (s === 404) return "Gemini model nahi mila. Check GEMINI_MODEL in .env, or remove it to use the default.";
+  if (s >= 500) return "Gemini abhi busy hai, thodi der mein dobara boliye. Google's AI is busy right now, please try again in a moment.";
   if (s === 429) return "Gemini ki free limit abhi poori ho gayi, ek minute baad try kijiye. The free limit is used up for now, please try again in a minute.";
   return "Kuch gadbad ho gayi, please dobara try kijiye. Something went wrong, please try again.";
 }
