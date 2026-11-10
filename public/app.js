@@ -1,5 +1,6 @@
 import { romanize } from "/romanize.js";
 import { downsample, encodeWav, mergeChunks, rms } from "/audio.js";
+import { safeUrl } from "/book.js";
 
 const COPY = {
   tapToSpeak: "Tap the mic and speak",
@@ -19,7 +20,12 @@ const COPY = {
   undoFailed: "That couldn't be undone.",
   appointments: "Appointments today",
   orders: "Open orders",
+  lowStock: "Low stock",
+  wrongPin: "That PIN didn't work.",
 };
+// Entry cards are coloured by what kind of entry they are; the words still say it.
+const ENTRY_KINDS = [[/^Sale/, "sale"], [/^Expense/, "expense"], [/^Payment/, "payment"], [/^(Stock|Added stock|Updated stock)/, "stock"], [/^(Order|Appointment)/, "plan"]];
+const entryKind = (summary) => ENTRY_KINDS.find(([re]) => re.test(summary))?.[1] ?? "other";
 // Speech recognition language. The Hinglish setting listens in Hindi, which handles
 // mixed speech best; what it hears is shown in Roman letters.
 const SPEECH_LANG = { hinglish: "hi-IN", english: "en-IN" };
@@ -82,6 +88,7 @@ function renderGlance(g) {
   const extra = [];
   if (g.appointments_today) extra.push(`${COPY.appointments}: ${g.appointments_today}`);
   if (g.open_orders) extra.push(`${COPY.orders}: ${g.open_orders}`);
+  if (g.low_stock) extra.push(`${COPY.lowStock}: ${g.low_stock}`);
   $("glance-extra").textContent = extra.join(" · ");
   $("glance-extra").hidden = !extra.length;
 }
@@ -100,10 +107,40 @@ function addMessage(role, text, className = "") {
   return el;
 }
 
+function addLinks(links) {
+  const safe = (links ?? []).map((l) => ({ ...l, url: safeUrl(l.url) })).filter((l) => l.url);
+  if (!safe.length) return;
+  els.welcome.hidden = true;
+  const row = document.createElement("div");
+  row.className = "entry-links";
+  for (const link of safe) {
+    const a = document.createElement("a");
+    a.className = `link-chip link-${link.kind === "whatsapp" ? "wa" : "bill"}`;
+    a.href = link.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = romanize(link.label);
+    row.append(a);
+  }
+  els.log.append(row);
+  scrollDown();
+}
+
+let toastTimer = 0;
+function toast(message) {
+  const t = $("toast");
+  t.textContent = message;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+
+const refreshBook = () => dispatchEvent(new CustomEvent("munshi:refresh"));
+
 function addAction({ id, summary, undone_at: undoneAt }) {
   els.welcome.hidden = true;
   const card = document.createElement("div");
-  card.className = "entry";
+  card.className = `entry entry-${entryKind(summary)}`;
   card.dataset.actionId = id;
   const label = document.createElement("span");
   label.className = "entry-summary";
@@ -179,11 +216,21 @@ async function send(text, { spoken = false } = {}) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
+    if (res.status === 401) return showLock();
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     for await (const event of readEvents(res.body)) {
       if (event.type === "text") {
         streamed += event.delta;
         showText(streamed);
+      } else if (event.type === "tool") {
+        // Words written before a tool call were thinking aloud; the reply comes after.
+        bubble?.remove();
+        bubble = null;
+        streamed = "";
+      } else if (event.type === "links") {
+        bubble = null;
+        streamed = "";
+        addLinks(event.links);
       } else if (event.type === "action") {
         bubble = null; // text after an entry belongs below its card
         streamed = "";
@@ -197,11 +244,13 @@ async function send(text, { spoken = false } = {}) {
         showText(event.reply);
         renderGlance(event.glance);
         renderBusiness(event.business);
+        refreshBook();
         if (spoken && soundOn) speak(event.reply);
       } else if (event.type === "error") {
         finished = true;
         addMessage("assistant", event.message, "msg-error");
         renderGlance(event.glance);
+        refreshBook();
         if (spoken && soundOn) speak(event.message);
       }
     }
@@ -242,12 +291,12 @@ async function undo(id, card, btn) {
     if (!res.ok) throw new Error(body.error);
     markUndone(card);
     renderGlance(body.glance);
-    setStatus(COPY.undone);
-    setTimeout(() => setStatus(), 2000);
+    refreshBook();
+    toast(`${COPY.undone}: ${romanize(body.undone)}`);
   } catch (err) {
     console.error(err);
     btn.disabled = false;
-    setStatus(COPY.undoFailed);
+    toast(err.message || COPY.undoFailed);
   }
 }
 
@@ -530,6 +579,49 @@ for (const btn of document.querySelectorAll("[data-try]")) {
   });
 }
 
+// The shop book's "Try" buttons and anything else on the page can ask the assistant something.
+addEventListener("munshi:say", (event) => {
+  const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $("try").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
+  send(event.detail.text);
+});
+addEventListener("munshi:business", (event) => renderBusiness(event.detail));
+
+// "/" jumps to the message box, like many chat apps.
+addEventListener("keydown", (event) => {
+  if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (event.target.closest?.("input, textarea, [contenteditable]")) return;
+  event.preventDefault();
+  els.input.focus();
+});
+
+/* ---------- PIN lock ---------- */
+
+function showLock() {
+  setBusy(false);
+  $("lock-screen").hidden = false;
+  document.body.classList.add("is-locked");
+  $("lock-pin").focus();
+}
+
+$("lock-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const pin = $("lock-pin").value;
+  $("lock-error").textContent = "";
+  try {
+    const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin }) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || COPY.wrongPin);
+    $("lock-screen").hidden = true;
+    document.body.classList.remove("is-locked");
+    $("lock-pin").value = "";
+    init();
+  } catch (err) {
+    $("lock-error").textContent = err.message || COPY.wrongPin;
+    $("lock-pin").select();
+  }
+});
+
 async function init() {
   els.mic.disabled = !voiceAvailable();
   renderChips();
@@ -540,6 +632,7 @@ async function init() {
     const res = await fetch("/api/state");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const state = await res.json();
+    if (state.locked) return showLock();
     $("demo-note").hidden = !state.demo;
     // Gnani needs mic capture in the browser; without it, fall back to built-in speech.
     voiceEngine = state.voice === "gnani" && navigator.mediaDevices?.getUserMedia && window.AudioWorkletNode ? "gnani" : "browser";
@@ -547,13 +640,16 @@ async function init() {
     setBusy(false);
     renderBusiness(state.business);
     renderGlance(state.glance);
+    els.log.querySelectorAll(".msg, .entry, .entry-links").forEach((node) => node.remove());
     for (const m of state.messages) {
       // Same order as when it happened: entry cards, then the reply about them.
       for (const action of m.actions) addAction(action);
+      addLinks(m.links);
       if (m.text) addMessage(m.role, m.text);
     }
     els.welcome.hidden = state.messages.length > 0;
     scrollDown();
+    dispatchEvent(new CustomEvent("munshi:ready", { detail: { business: state.business, pin: state.pin } }));
   } catch (err) {
     console.error(err);
     setStatus(COPY.offline);
