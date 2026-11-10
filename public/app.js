@@ -390,7 +390,9 @@ let micDeviceId = store.get("micDevice", "");
  * the noise, and Gnani copes with background noise itself.
  */
 async function openMic() {
-  const audio = { channelCount: 1, echoCancellation: true, noiseSuppression: false, autoGainControl: true };
+  // Echo cancellation is off too: replies stop before recording starts, and on some laptop
+  // mics it also flattens the owner's voice. Auto gain stays on to lift quiet mics.
+  const audio = { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: true };
   if (micDeviceId) {
     try {
       return await navigator.mediaDevices.getUserMedia({ audio: { ...audio, deviceId: { exact: micDeviceId } } });
@@ -449,10 +451,9 @@ async function startGnaniRecording() {
     cleanUp();
     els.wave.style.removeProperty("--lvl");
     console.info(`Mic: loudest ${peak.toFixed(4)}, speech bar ${speechLevel.toFixed(4)}`);
-    if (!heard && peak < SILENT_MIC_LEVEL) return setStatus(COPY.micSilent);
-    // Even quiet sound goes to Gnani, which is better at telling speech from noise.
-    if (!heard && peak < MIN_SPEECH_LEVEL / 2) return setStatus(COPY.noSpeech);
-    upload(encodeWav(downsample(mergeChunks(chunks), rate)));
+    if (!heard && peak < SILENT_MIC_LEVEL) return setStatus(`${COPY.micSilent} (mic level ${peak.toFixed(4)})`);
+    // Anything louder than a dead mic goes to Gnani; the server raises quiet recordings.
+    upload(encodeWav(downsample(mergeChunks(chunks), rate)), peak);
   };
 
   const source = context.createMediaStreamSource(stream);
@@ -497,7 +498,7 @@ function stopGnaniRecording() {
   }
 }
 
-async function upload(wav) {
+async function upload(wav, peak = 0) {
   setBusy(true);
   let transcript = "";
   let problem = null;
@@ -516,7 +517,8 @@ async function upload(wav) {
   }
   setBusy(false);
   if (problem) return setStatus(problem);
-  if (!transcript) return setStatus(COPY.noSpeech);
+  // The level tells a too-quiet mic apart from speech Gnani couldn't make out.
+  if (!transcript) return setStatus(`${COPY.noSpeech} (mic level ${peak.toFixed(3)}${peak < 0.01 ? ", very low: open Mic check" : ""})`);
   send(transcript, { spoken: true });
 }
 
