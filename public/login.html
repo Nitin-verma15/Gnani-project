@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <meta name="description" content="Sign in to your shop on Munshi, or register a new shop.">
+  <title>Sign in · Munshi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="auth-page">
+  <main class="auth-layout">
+    <aside class="auth-brand">
+      <a class="logo" href="/" aria-label="Munshi home">
+        <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Munshi</span>
+      </a>
+      <div class="auth-brand-copy">
+        <p class="label">The ledger that listens</p>
+        <h1>Dukaan ka hisaab,<br><em>bas bolkar.</em></h1>
+        <ul class="auth-points">
+          <li><span>01</span>Speak in English, Hindi or Hinglish. Every entry is read back, with one-tap undo.</li>
+          <li><span>02</span>Udhaar, stock, bills with GST and WhatsApp reminders, all in one place.</li>
+          <li><span>03</span>Your shop's books are kept separately from every other shop.</li>
+        </ul>
+      </div>
+      <p class="auth-brand-foot">Independent hackathon project for Gnani.ai.</p>
+    </aside>
+
+    <section class="auth-panel" aria-label="Your shop account">
+      <div class="auth-card">
+        <div class="auth-tabs" role="tablist" aria-label="Your shop account">
+          <button type="button" role="tab" id="auth-tab-signin" aria-controls="signin-form" aria-selected="true">Sign in</button>
+          <button type="button" role="tab" id="auth-tab-register" aria-controls="register-form" aria-selected="false" tabindex="-1">Create shop account</button>
+        </div>
+
+        <form class="auth-form" id="signin-form" role="tabpanel" aria-labelledby="auth-tab-signin">
+          <h2>Welcome back</h2>
+          <p class="auth-sub">Sign in to your shop's books.</p>
+          <label>Mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" required></label>
+          <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+          <button type="submit" class="btn btn-ink">Sign in</button>
+        </form>
+
+        <form class="auth-form" id="register-form" role="tabpanel" aria-labelledby="auth-tab-register" hidden>
+          <h2>Register your shop</h2>
+          <p class="auth-sub">Free. Your books stay separate from every other shop.</p>
+          <label>Shop name<input name="shop_name" autocomplete="organization" maxlength="80" placeholder="Sharma Kirana Store" required></label>
+          <div class="auth-row">
+            <label>Your name<input name="owner_name" autocomplete="name" maxlength="80" required></label>
+            <label>Type of shop <span class="opt">optional</span><input name="type" maxlength="80" placeholder="kirana, salon…"></label>
+          </div>
+          <label>Mobile number<input name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" required></label>
+          <label>Password <span class="opt">at least 6 characters</span><input name="password" type="password" autocomplete="new-password" minlength="6" required></label>
+          <button type="submit" class="btn btn-ink">Create account</button>
+        </form>
+
+        <p class="auth-error" id="auth-error" role="alert"></p>
+        <div class="auth-or"><span>or</span></div>
+        <button type="button" class="btn btn-outline-ink" id="demo-shop">Try the demo shop</button>
+        <p class="auth-note">The demo shop is a shared sample kirana store. Anyone trying it sees the same books.</p>
+      </div>
+      <a class="auth-back" href="/">← Back to the website</a>
+    </section>
+  </main>
+
+  <script type="module" src="/login.js"></script>
+</body>
+</html>

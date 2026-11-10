@@ -13,11 +13,17 @@ import { createGnani, GnaniError, SPEECH_MODES } from "./gnani.js";
 import { createGeminiClient, GeminiApiError, geminiFriendlyError, GEMINI_DEFAULT_MODEL } from "./gemini.js";
 import { renderBill, toCsv } from "./documents.js";
 import { dailyBackup } from "./backup.js";
+import { openAccounts, AccountError, DEMO_SHOP_ID, normalizePhone } from "./accounts.js";
+import { seedSample } from "./seed.js";
 import { romanize } from "../public/romanize.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC_FILES = {
   "/": ["index.html", "text/html; charset=utf-8"],
+  "/login": ["login.html", "text/html; charset=utf-8"],
+  "/signup": ["login.html", "text/html; charset=utf-8"],
+  "/app": ["app.html", "text/html; charset=utf-8"],
+  "/login.js": ["login.js", "text/javascript; charset=utf-8"],
   "/app.js": ["app.js", "text/javascript; charset=utf-8"],
   "/book.js": ["book.js", "text/javascript; charset=utf-8"],
   "/romanize.js": ["romanize.js", "text/javascript; charset=utf-8"],
@@ -64,12 +70,37 @@ function readCookie(req, name) {
   return null;
 }
 
-export function createApp({ db, client, demo, gnani = null, pin = null }) {
-  const tools = createTools(db);
-  const pinHash = pin ? hashPin(pin) : null;
-  const sessions = new Map(); // token -> expiry time
-  const login = { failures: 0, lockedUntil: 0 };
-  let queue = Promise.resolve(); // one turn at a time keeps the conversation history ordered
+// Behind HTTPS (a hosting provider's proxy), the cookie is also marked Secure.
+const isHttps = (req) => req.socket?.encrypted || req.headers["x-forwarded-proto"] === "https";
+const sessionCookie = (token, maxAge, req) => `${SESSION_COOKIE}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}${req && isHttps(req) ? "; Secure" : ""}`;
+
+/** One shop's books: its database, its tools, and a queue so its turns run one at a time. */
+function shopContext(db) {
+  return { db, tools: createTools(db), queue: Promise.resolve() };
+}
+
+/**
+ * Two ways to run:
+ *  - accounts: each shop registers and signs in; every shop has its own database.
+ *  - db (single shop): one set of books, optionally behind a PIN.
+ */
+export function createApp({ db = null, accounts = null, client, demo, gnani = null, pin = null }) {
+  if (!db && !accounts) throw new Error("createApp needs either db or accounts");
+  const single = db ? shopContext(db) : null;
+  const shops = new Map(); // shop id -> context, opened on first use
+  const pinHash = !accounts && pin ? hashPin(pin) : null;
+  const pinSessions = new Map(); // token -> expiry time (PIN mode only)
+  const pinLogin = { failures: 0, lockedUntil: 0 };
+  const failedLogins = new Map(); // mobile -> { failures, lockedUntil } (accounts mode)
+
+  function contextFor(shopId) {
+    if (!shops.has(shopId)) {
+      const shopDb = openDb(accounts.shopDbPath(shopId));
+      if (shopId === DEMO_SHOP_ID) seedSample(shopDb);
+      shops.set(shopId, shopContext(shopDb));
+    }
+    return shops.get(shopId);
+  }
 
   const json = (res, status, body, headers = {}) => {
     res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers });
@@ -98,65 +129,123 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
     }
   }
 
-  function signedIn(req) {
-    if (!pinHash) return true;
+  /* ---------- Who is asking ---------- */
+
+  /** The signed-in shop and its books, or null. */
+  function current(req) {
     const token = readCookie(req, SESSION_COOKIE);
-    const expires = token && sessions.get(token);
-    if (!expires) return false;
-    if (expires < Date.now()) {
-      sessions.delete(token);
-      return false;
+    if (accounts) {
+      const shop = accounts.shopForToken(token);
+      return shop ? { shop, ...contextFor(shop.id), ctxKey: shop.id } : null;
     }
-    return true;
+    if (pinHash) {
+      const expires = token && pinSessions.get(token);
+      if (!expires || expires < Date.now()) {
+        if (token) pinSessions.delete(token);
+        return null;
+      }
+    }
+    return { shop: null, ...single, ctxKey: "single" };
   }
 
-  async function signIn(req, res) {
+  // Turns queue per shop, so two shops never wait on each other.
+  const ctxRef = (who) => (accounts ? shops.get(who.ctxKey) : single);
+
+  /* ---------- Accounts ---------- */
+
+  function startSession(req, res, shop, status = 200) {
+    const { token, maxAge } = accounts.createSession(shop.id);
+    json(res, status, { ok: true, account: shop }, { "Set-Cookie": sessionCookie(token, maxAge, req) });
+  }
+
+  async function register(req, res) {
+    const body = await readJson(req);
+    const shop = accounts.register(body);
+    // The new shop's books start with its name, owner and number, as if the owner had said them.
+    const { tools } = contextFor(shop.id);
+    const profile = { name: shop.shop_name, owner_name: shop.owner_name, phone: shop.phone };
+    if (typeof body.type === "string" && body.type.trim()) profile.type = body.type.trim().slice(0, 80);
+    tools.updateProfile(profile);
+    startSession(req, res, shop, 201);
+  }
+
+  async function login(req, res) {
+    const { phone, password } = await readJson(req);
+    const key = normalizePhone(phone) ?? "invalid";
+    const record = failedLogins.get(key) ?? { failures: 0, lockedUntil: 0 };
+    if (Date.now() < record.lockedUntil) {
+      throw new HttpError(429, "Bahut baar galat password. Too many wrong tries, wait a minute and try again.");
+    }
+    const shop = accounts.verify(phone, password);
+    if (!shop) {
+      record.failures++;
+      if (record.failures >= MAX_FAILED_LOGINS) {
+        record.failures = 0;
+        record.lockedUntil = Date.now() + LOCKOUT_MS;
+      }
+      failedLogins.set(key, record);
+      throw new HttpError(401, "Mobile number ya password galat hai. That number and password don't match.");
+    }
+    failedLogins.delete(key);
+    startSession(req, res, shop);
+  }
+
+  async function demoLogin(req, res) {
+    await readJson(req);
+    startSession(req, res, accounts.ensureDemoShop());
+  }
+
+  async function pinSignIn(req, res) {
     const { pin: attempt } = await readJson(req);
     if (!pinHash) return json(res, 200, { ok: true });
-    if (Date.now() < login.lockedUntil) {
+    if (Date.now() < pinLogin.lockedUntil) {
       throw new HttpError(429, "Bahut galat PIN. Too many wrong PINs, wait a minute and try again.");
     }
     const ok = typeof attempt === "string" && timingSafeEqual(hashPin(attempt), pinHash);
     if (!ok) {
-      login.failures++;
-      if (login.failures >= MAX_FAILED_LOGINS) {
-        login.failures = 0;
-        login.lockedUntil = Date.now() + LOCKOUT_MS;
+      pinLogin.failures++;
+      if (pinLogin.failures >= MAX_FAILED_LOGINS) {
+        pinLogin.failures = 0;
+        pinLogin.lockedUntil = Date.now() + LOCKOUT_MS;
       }
       throw new HttpError(401, "PIN galat hai. That PIN isn't right.");
     }
-    login.failures = 0;
+    pinLogin.failures = 0;
     const token = randomBytes(32).toString("base64url");
-    sessions.set(token, Date.now() + SESSION_DAYS * 86_400_000);
-    json(res, 200, { ok: true }, {
-      "Set-Cookie": `${SESSION_COOKIE}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${SESSION_DAYS * 86_400}`,
-    });
+    pinSessions.set(token, Date.now() + SESSION_DAYS * 86_400_000);
+    json(res, 200, { ok: true }, { "Set-Cookie": sessionCookie(token, SESSION_DAYS * 86_400, req) });
   }
 
   function signOut(req, res) {
     const token = readCookie(req, SESSION_COOKIE);
-    if (token) sessions.delete(token);
-    json(res, 200, { ok: true }, { "Set-Cookie": `${SESSION_COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0` });
+    if (accounts) accounts.endSession(token);
+    else if (token) pinSessions.delete(token);
+    json(res, 200, { ok: true }, { "Set-Cookie": sessionCookie("", 0, req) });
   }
 
-  function state() {
-    const rows = db.prepare("SELECT role, text, action_ids, links FROM chat_log ORDER BY id DESC LIMIT 100").all().reverse();
+  /* ---------- The shop's books ---------- */
+
+  function state(who) {
+    const rows = who.db.prepare("SELECT role, text, action_ids, links FROM chat_log ORDER BY id DESC LIMIT 100").all().reverse();
     return {
       demo,
+      auth: accounts ? "accounts" : pinHash ? "pin" : "none",
+      signedIn: true,
       locked: false,
       pin: Boolean(pinHash),
+      account: who.shop,
       voice: gnani ? "gnani" : "browser",
-      business: tools.profile(),
-      glance: tools.glance(),
+      business: who.tools.profile(),
+      glance: who.tools.glance(),
       messages: rows.map((r) => ({
         role: r.role, text: r.text,
-        actions: tools.actionsById(JSON.parse(r.action_ids)),
+        actions: who.tools.actionsById(JSON.parse(r.action_ids)),
         links: JSON.parse(r.links || "[]"),
       })),
     };
   }
 
-  async function chat(req, res) {
+  async function chat(req, res, who) {
     const body = await readJson(req);
     const text = typeof body.text === "string" ? body.text.trim() : "";
     if (!text) throw new HttpError(400, "Message is empty");
@@ -164,10 +253,12 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
 
     res.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-store" });
     const emit = (event) => { if (!res.destroyed) res.write(`data: ${JSON.stringify(event)}\n\n`); };
+    const { db: shopDb, tools } = who;
+    const ctx = ctxRef(who);
 
-    const turn = queue.then(async () => {
+    const turn = ctx.queue.then(async () => {
       try {
-        const { reply } = await runTurn({ db, client, tools, text, emit, now: new Date() });
+        const { reply } = await runTurn({ db: shopDb, client, tools, text, emit, now: new Date() });
         emit({ type: "done", reply, glance: tools.glance(), business: tools.profile() });
       } catch (err) {
         console.error("Turn failed:", err);
@@ -176,16 +267,16 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
       }
       res.end();
     });
-    queue = turn;
+    ctx.queue = turn;
     await turn;
   }
 
-  async function transcribe(req, res, mode) {
+  async function transcribe(req, res, mode, who) {
     if (!gnani) throw new HttpError(404, "Gnani voice isn't configured");
     if (!SPEECH_MODES.includes(mode)) throw new HttpError(400, "Unknown speech mode");
     const audio = await readBody(req, "audio/wav", MAX_AUDIO_BYTES);
     // Telling Prisma the customers' and items' names helps it recognise them.
-    const keyterms = db.prepare(
+    const keyterms = who.db.prepare(
       `SELECT name FROM (SELECT name, id FROM customers WHERE voided_at IS NULL ORDER BY id DESC LIMIT 150)
        UNION ALL SELECT name FROM (SELECT name FROM items WHERE voided_at IS NULL ORDER BY id DESC LIMIT 50)`,
     ).all().map((c) => c.name);
@@ -207,54 +298,53 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
     res.end(audio);
   }
 
-  function undo(res, id) {
+  function undo(res, id, who) {
     try {
-      const result = tools.undoAction(id, { seen: false });
-      json(res, 200, { ...result, glance: tools.glance() });
+      const result = who.tools.undoAction(id, { seen: false });
+      json(res, 200, { ...result, glance: who.tools.glance() });
     } catch (err) {
       if (err instanceof ToolError) return json(res, 409, { error: err.message });
       throw err;
     }
   }
 
-  async function saveProfile(req, res) {
+  async function saveProfile(req, res, who) {
     const body = await readJson(req);
     const fields = {};
     for (const key of ["name", "type", "owner_name", "phone", "address", "gstin", "upi_id"]) {
       if (typeof body[key] === "string") fields[key] = body[key].slice(0, 200);
     }
-    const out = tools.updateProfile(fields);
+    const out = who.tools.updateProfile(fields);
     if (out.error) return json(res, 400, { error: out.error });
-    // The assistant hears about it on the next message, like an Undo tap.
-    json(res, 200, { business: tools.profile(), action: out.action ?? null });
+    json(res, 200, { business: who.tools.profile(), action: out.action ?? null });
   }
 
-  function bill(res, id) {
-    const data = tools.billData(id);
+  function bill(res, id, who) {
+    const data = who.tools.billData(id);
     if (!data) throw new HttpError(404, "No such bill");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
     res.end(renderBill(data));
   }
 
-  function exportCsv(res, kind) {
-    const rows = tools.exportRows(kind);
+  function exportCsv(res, kind, who) {
+    const rows = who.tools.exportRows(kind);
     if (!rows) throw new HttpError(404, "Not found");
     res.writeHead(200, {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="munshi-${kind}-${tools.today()}.csv"`,
+      "Content-Disposition": `attachment; filename="munshi-${kind}-${who.tools.today()}.csv"`,
       "Cache-Control": "no-store",
     });
     res.end(toCsv(rows));
   }
 
-  async function downloadBackup(res) {
+  async function downloadBackup(res, who) {
     const file = join(tmpdir(), `munshi-download-${randomBytes(8).toString("hex")}.db`);
     try {
-      backupTo(db, file);
+      backupTo(who.db, file);
       const data = await readFile(file);
       res.writeHead(200, {
         "Content-Type": "application/vnd.sqlite3",
-        "Content-Disposition": `attachment; filename="munshi-backup-${tools.today()}.db"`,
+        "Content-Disposition": `attachment; filename="munshi-backup-${who.tools.today()}.db"`,
         "Cache-Control": "no-store",
       });
       res.end(data);
@@ -263,12 +353,18 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
     }
   }
 
-  return async function handler(req, res) {
+  const handler = async function handler(req, res) {
     const { pathname, searchParams } = new URL(req.url, "http://localhost");
     try {
-      // Without a PIN there is no login, so only pages on this computer may reach the server
-      // (this also blocks DNS rebinding). With a PIN, the session cookie does that job.
-      if (!pinHash && !LOCAL_HOST.test(req.headers.host ?? "")) throw new HttpError(403, "Forbidden host");
+      // With no sign-in at all, only pages on this computer may reach the server (this also
+      // blocks DNS rebinding). With accounts or a PIN, the session cookie does that job.
+      if (!accounts && !pinHash && !LOCAL_HOST.test(req.headers.host ?? "")) throw new HttpError(403, "Forbidden host");
+
+      // For a hosting provider's health check.
+      if (req.method === "GET" && pathname === "/healthz") {
+        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+        return res.end("ok");
+      }
 
       const file = PUBLIC_FILES[pathname];
       if (req.method === "GET" && file) {
@@ -281,32 +377,44 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
         return res.end(body);
       }
 
-      if (req.method === "POST" && pathname === "/api/login") return await signIn(req, res);
-      if (!signedIn(req)) {
-        if (req.method === "GET" && pathname === "/api/state") return json(res, 200, { locked: true, pin: true, demo });
-        throw new HttpError(401, "Locked. Enter the PIN.");
+      if (accounts) {
+        if (req.method === "POST" && pathname === "/api/auth/register") return await register(req, res);
+        if (req.method === "POST" && pathname === "/api/auth/login") return await login(req, res);
+        if (req.method === "POST" && pathname === "/api/auth/demo") return await demoLogin(req, res);
+      } else if (req.method === "POST" && pathname === "/api/login") {
+        return await pinSignIn(req, res);
+      }
+      if (req.method === "POST" && pathname === "/api/logout") return signOut(req, res);
+
+      const who = current(req);
+      if (!who) {
+        if (req.method === "GET" && pathname === "/api/state") {
+          return json(res, 200, accounts
+            ? { auth: "accounts", signedIn: false, demo }
+            : { auth: "pin", signedIn: false, locked: true, pin: true, demo });
+        }
+        throw new HttpError(401, accounts ? "Please sign in to your shop." : "Locked. Enter the PIN.");
       }
 
-      if (req.method === "POST" && pathname === "/api/logout") return signOut(req, res);
-      if (req.method === "GET" && pathname === "/api/state") return json(res, 200, state());
-      if (req.method === "GET" && pathname === "/api/overview") return json(res, 200, tools.overview());
-      if (req.method === "POST" && pathname === "/api/chat") return await chat(req, res);
-      if (req.method === "POST" && pathname === "/api/profile") return await saveProfile(req, res);
-      if (req.method === "POST" && pathname === "/api/speech/transcribe") return await transcribe(req, res, searchParams.get("mode"));
+      if (req.method === "GET" && pathname === "/api/state") return json(res, 200, state(who));
+      if (req.method === "GET" && pathname === "/api/overview") return json(res, 200, who.tools.overview());
+      if (req.method === "POST" && pathname === "/api/chat") return await chat(req, res, who);
+      if (req.method === "POST" && pathname === "/api/profile") return await saveProfile(req, res, who);
+      if (req.method === "POST" && pathname === "/api/speech/transcribe") return await transcribe(req, res, searchParams.get("mode"), who);
       if (req.method === "POST" && pathname === "/api/speech/speak") return await speak(req, res);
-      if (req.method === "GET" && pathname === "/api/backup") return await downloadBackup(res);
+      if (req.method === "GET" && pathname === "/api/backup") return await downloadBackup(res, who);
       const exportMatch = pathname.match(/^\/api\/export\/(\w+)\.csv$/);
-      if (req.method === "GET" && exportMatch && EXPORTS.includes(exportMatch[1])) return exportCsv(res, exportMatch[1]);
+      if (req.method === "GET" && exportMatch && EXPORTS.includes(exportMatch[1])) return exportCsv(res, exportMatch[1], who);
       const billMatch = pathname.match(/^\/bill\/(\d+)$/);
-      if (req.method === "GET" && billMatch) return bill(res, Number(billMatch[1]));
+      if (req.method === "GET" && billMatch) return bill(res, Number(billMatch[1]), who);
       const undoMatch = pathname.match(/^\/api\/actions\/(\d+)\/undo$/);
       if (req.method === "POST" && undoMatch) {
         await readJson(req);
-        return undo(res, Number(undoMatch[1]));
+        return undo(res, Number(undoMatch[1]), who);
       }
       json(res, 404, { error: "Not found" });
     } catch (err) {
-      if (err instanceof HttpError) return json(res, err.status, { error: err.message });
+      if (err instanceof HttpError || err instanceof AccountError) return json(res, err.status, { error: err.message });
       if (err instanceof GnaniError) {
         console.error(err.message);
         return json(res, 502, { error: err.friendly });
@@ -316,6 +424,16 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
       else res.end();
     }
   };
+  /** Every shop's database that is open or registered, for the daily backups. */
+  handler.shopDatabases = () => (accounts
+    ? accounts.allShopIds().map((id) => [id, contextFor(id).db])
+    : [["munshi", single.db]]);
+  /** Closes every shop database this app opened. */
+  handler.close = () => {
+    for (const ctx of shops.values()) ctx.db.close();
+    shops.clear();
+  };
+  return handler;
 }
 
 class HttpError extends Error {
@@ -336,20 +454,26 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (wanted && wanted !== provider) console.warn(`MUNSHI_PROVIDER=${wanted}, but its API key isn't set. Using ${provider}.`);
   const geminiModel = process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL;
   const hasCredentials = provider !== "demo";
-  const dbPath = process.env.MUNSHI_DB || join(ROOT, "data", "munshi.db");
-  const db = openDb(dbPath);
   const client = provider === "claude" ? new Anthropic()
     : provider === "gemini" ? createGeminiClient({ apiKey: process.env.GEMINI_API_KEY.trim(), model: geminiModel, thinking: process.env.GEMINI_THINKING?.trim() || null })
       : createDemoClient();
+
+  // Shop accounts are the default. MUNSHI_SINGLE_SHOP=1 keeps the older one-shop setup (data/munshi.db).
+  const singleShop = process.env.MUNSHI_SINGLE_SHOP === "1";
+  const dataDir = process.env.MUNSHI_DATA_DIR || join(ROOT, "data");
+  const dbPath = process.env.MUNSHI_DB || join(dataDir, "munshi.db");
+  const accounts = singleShop ? null : openAccounts(dataDir);
+  const db = singleShop ? openDb(dbPath) : null;
+
   const port = Number(process.env.PORT) || 3000;
-  const pin = process.env.MUNSHI_PIN?.trim() || null;
+  const pin = singleShop ? process.env.MUNSHI_PIN?.trim() || null : null;
   const host = process.env.MUNSHI_HOST?.trim() || "127.0.0.1";
   const loopback = ["127.0.0.1", "localhost", "::1"].includes(host);
   if (pin && pin.length < 4) {
     console.error("MUNSHI_PIN must be at least 4 characters.");
     process.exit(1);
   }
-  if (!loopback && !pin) {
+  if (singleShop && !loopback && !pin) {
     console.error(`Refusing to listen on ${host} without MUNSHI_PIN: anyone on the network could read and change the books. Set MUNSHI_PIN in .env.`);
     process.exit(1);
   }
@@ -357,20 +481,26 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ? createGnani({ apiKey: process.env.GNANI_API_KEY, ...(process.env.GNANI_BASE_URL ? { baseUrl: process.env.GNANI_BASE_URL } : {}) })
     : null;
 
-  const backupDir = process.env.MUNSHI_BACKUP_DIR || join(dirname(dbPath), "backups");
+  const app = createApp({ db, accounts, client, demo: !hasCredentials, gnani, pin });
+
+  // A copy of every shop's books each day, in its own folder.
+  const backupDir = process.env.MUNSHI_BACKUP_DIR || join(dataDir, "backups");
   const backUp = () => {
-    try {
-      const made = dailyBackup(db, backupDir);
-      if (made) console.log(`Daily backup saved: ${made}`);
-    } catch (err) {
-      console.error("Daily backup failed:", err.message);
+    for (const [id, shopDb] of app.shopDatabases()) {
+      try {
+        const made = dailyBackup(shopDb, singleShop ? backupDir : join(backupDir, id));
+        if (made) console.log(`Daily backup saved: ${made}`);
+      } catch (err) {
+        console.error(`Daily backup failed for ${id}:`, err.message);
+      }
     }
   };
   backUp();
   setInterval(backUp, 60 * 60 * 1000).unref();
 
-  createServer(createApp({ db, client, demo: !hasCredentials, gnani, pin })).listen(port, host, () => {
+  createServer(app).listen(port, host, () => {
     console.log(`Munshi is running at http://${loopback ? "localhost" : host}:${port}`);
+    console.log(singleShop ? "Single shop mode." : "Shop accounts: each shop registers and signs in with its own books.");
     if (provider === "claude") console.log("AI: Claude.");
     if (provider === "gemini") console.log(`AI: Google Gemini (${geminiModel}).`);
     console.log(gnani ? "Voice: Gnani Prisma and Timbre." : "Voice: browser speech (no GNANI_API_KEY set).");

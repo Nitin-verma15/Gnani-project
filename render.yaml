@@ -1,0 +1,25 @@
+# Render blueprint: https://render.com/docs/blueprint-spec
+# New > Blueprint, pick this repository, then fill in the secret keys when asked.
+services:
+  - type: web
+    name: munshi
+    runtime: node
+    plan: starter            # needed for the disk below; see the README for the free-plan caveat
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: MUNSHI_HOST
+        value: 0.0.0.0        # accept the hosting provider's traffic; shops still sign in
+      - key: MUNSHI_DATA_DIR
+        value: /var/data      # accounts and every shop's books, on the persistent disk
+      - key: GEMINI_API_KEY
+        sync: false           # Render asks for the value; it never goes in the repository
+      - key: GNANI_API_KEY
+        sync: false
+    disk:
+      name: munshi-data
+      mountPath: /var/data
+      sizeGB: 1

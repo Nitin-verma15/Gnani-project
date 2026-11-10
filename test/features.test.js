@@ -236,7 +236,10 @@ test("the shop book, bills, exports, backup and profile are served", async () =>
 test("with a PIN, everything but the page itself needs signing in", async () => {
   await withServer({ pin: "4321" }, async (base) => {
     assert.equal((await fetch(`${base}/`)).status, 200);
-    assert.deepEqual(await (await fetch(`${base}/api/state`)).json(), { locked: true, pin: true, demo: true });
+    const lockedState = await (await fetch(`${base}/api/state`)).json();
+    assert.equal(lockedState.locked, true);
+    assert.equal(lockedState.signedIn, false);
+    assert.equal(lockedState.messages, undefined, "nothing from the books before signing in");
     assert.equal((await fetch(`${base}/api/overview`)).status, 401);
     assert.equal((await fetch(`${base}/api/backup`)).status, 401);
     assert.equal((await post(`${base}/api/chat`, { text: "hi" })).status, 401);

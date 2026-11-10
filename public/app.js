@@ -218,7 +218,7 @@ async function send(text, { spoken = false } = {}) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
-    if (res.status === 401) return showLock();
+    if (res.status === 401) return authMode === "accounts" ? showAuth() : showLock();
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     for await (const event of readEvents(res.body)) {
       if (event.type === "text") {
@@ -672,6 +672,32 @@ $("lock-form").addEventListener("submit", async (event) => {
   }
 });
 
+/* ---------- Shop accounts ---------- */
+
+let authMode = "none";
+
+const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+/** Signed out of an accounts setup: the sign-in page takes over. */
+function showAuth() {
+  setBusy(false);
+  location.replace("/login");
+}
+
+/** The header: the shop's name and type, and Sign out. */
+function renderAccount(account) {
+  $("app-signout").hidden = authMode !== "accounts" && authMode !== "pin";
+  if (!account) return;
+  $("app-shop-name").textContent = romanize(account.shop_name);
+  $("app-shop-meta").textContent = account.demo ? "Shared demo shop" : `Signed in as ${romanize(account.owner_name)}`;
+}
+
+async function signOut() {
+  await post("/api/logout", {}).catch(() => {});
+  location.replace(authMode === "accounts" ? "/login" : "/app");
+}
+$("app-signout").addEventListener("click", signOut);
+
 async function init() {
   els.mic.disabled = !voiceAvailable();
   renderChips();
@@ -682,7 +708,10 @@ async function init() {
     const res = await fetch("/api/state");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const state = await res.json();
+    authMode = state.auth ?? "none";
+    if (authMode === "accounts" && !state.signedIn) return showAuth();
     if (state.locked) return showLock();
+    renderAccount(state.account);
     $("demo-note").hidden = !state.demo;
     // Gnani needs mic capture in the browser; without it, fall back to built-in speech.
     voiceEngine = state.voice === "gnani" && navigator.mediaDevices?.getUserMedia && window.AudioWorkletNode ? "gnani" : "browser";
@@ -701,7 +730,7 @@ async function init() {
     }
     els.welcome.hidden = state.messages.length > 0;
     scrollDown();
-    dispatchEvent(new CustomEvent("munshi:ready", { detail: { business: state.business, pin: state.pin } }));
+    dispatchEvent(new CustomEvent("munshi:ready", { detail: { business: state.business, pin: state.pin, auth: authMode } }));
   } catch (err) {
     console.error(err);
     setStatus(COPY.offline);

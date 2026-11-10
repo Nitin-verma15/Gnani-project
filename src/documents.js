@@ -96,7 +96,7 @@ export function renderBill(bill) {
 </main>
 <div class="actions">
   <button type="button" onclick="print()">Print or save as PDF</button>
-  <a class="alt" href="/#try">Back to Munshi</a>
+  <a class="alt" href="/app">Back to Munshi</a>
 </div>
 </body>
 </html>`;

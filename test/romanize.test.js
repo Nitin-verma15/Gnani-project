@@ -35,7 +35,7 @@ test("demo mode understands Hindi script speech", async () => {
 });
 
 test("the website itself has no Devanagari text", () => {
-  for (const file of ["index.html", "app.js"]) {
+  for (const file of ["index.html", "login.html", "app.html", "app.js", "login.js", "book.js"]) {
     assert.doesNotMatch(readFileSync(new URL(`../public/${file}`, import.meta.url), "utf8"), /[ऀ-ॿ]/, file);
   }
 });
