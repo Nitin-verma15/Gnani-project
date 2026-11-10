@@ -190,6 +190,9 @@ export function createApp({ db, client, demo, gnani = null, pin = null }) {
        UNION ALL SELECT name FROM (SELECT name FROM items WHERE voided_at IS NULL ORDER BY id DESC LIMIT 50)`,
     ).all().map((c) => c.name);
     const transcript = await gnani.transcribe({ audio, mode, keyterms });
+    // Enough to tell "no audio arrived" from "Gnani heard nothing", without logging what was said.
+    const seconds = Math.max(0, (audio.length - 44) / 32000).toFixed(1);
+    console.log(`Speech (${mode}): ${seconds}s of audio, ${transcript ? `${transcript.length} characters heard` : "no words heard"}`);
     json(res, 200, { transcript: romanize(transcript) });
   }
 

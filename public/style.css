@@ -424,6 +424,7 @@ html:not(.has-scene) .story-pin { background: radial-gradient(700px 500px at 75%
 .composer input::placeholder { color: var(--muted-l); }
 .composer .icon-button { color: var(--text-l); }
 .voice-engine { font-size: 12px; line-height: 1.3; color: var(--muted-l); text-align: center; }
+.engine-switch { min-height: 32px; padding: 0 2px; border: 0; background: none; color: var(--gold-ink); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Shop book ---------- */
 .book-section { --c-sales: #2fa77f; --c-expenses: #d9644a; }
