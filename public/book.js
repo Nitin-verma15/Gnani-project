@@ -281,7 +281,10 @@ setUpProfileForm();
 addEventListener("munshi:refresh", refresh);
 addEventListener("munshi:ready", (e) => {
   fillProfile(e.detail.business);
-  $("lock").hidden = !e.detail.pin;
+  const accounts = e.detail.auth === "accounts";
+  $("lock").hidden = !e.detail.pin && !accounts;
+  $("lock").textContent = accounts ? "Sign out" : "Lock Munshi";
   refresh();
 });
+
 addEventListener("munshi:business", (e) => fillProfile(e.detail));

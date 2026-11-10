@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0c">
+  <meta name="description" content="Munshi is a voice-first AI munshi for small businesses in India. Say what happened at the counter, in English, Hindi or Hinglish, and it keeps the books.">
+  <title>Your shop · Munshi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Caveat:wght@500;700&display=swap">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#try">Skip to the assistant</a>
+
+  <header class="app-top">
+    <div class="app-top-inner">
+      <a class="logo" href="/" aria-label="Munshi home">
+        <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span>Munshi</span>
+      </a>
+      <div class="app-shop">
+        <span class="app-shop-name" id="app-shop-name"></span>
+        <span class="app-shop-meta" id="app-shop-meta"></span>
+      </div>
+      <nav class="app-actions" aria-label="Account">
+        <a class="btn btn-ghost btn-sm" href="/">Website</a>
+        <button type="button" class="btn btn-line btn-sm" id="app-signout" hidden>Sign out</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="app-assistant" aria-label="Assistant">
+      <section class="console" id="try" aria-label="Live assistant">
+        <header class="console-top">
+          <div class="console-title">
+            <span class="live-dot" aria-hidden="true"></span>
+            <h3 id="business-name">Your shop</h3>
+          </div>
+          <div class="console-controls">
+            <div class="speech-toggle" role="group" aria-label="Language you will speak">
+              <button type="button" data-speech="hinglish">Hinglish</button>
+              <button type="button" data-speech="english">English</button>
+            </div>
+            <button type="button" id="sound" class="icon-button" aria-pressed="true">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 9.5v5h3.5L12 19V5L7.5 9.5H4Z"/><path id="sound-waves" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/><path id="sound-off" hidden fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="m15.5 9.5 5 5m0-5-5 5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="glance" aria-label="Today at a glance">
+          <div class="tile"><span class="tile-label">Sales today</span><span class="tile-value" id="glance-sales">–</span></div>
+          <div class="tile"><span class="tile-label">Spent today</span><span class="tile-value" id="glance-expenses">–</span></div>
+          <div class="tile tile-due"><span class="tile-label">Udhaar due</span><span class="tile-value" id="glance-outstanding">–</span></div>
+        </div>
+        <p class="glance-extra" id="glance-extra" hidden></p>
+        <p class="toast" id="toast" role="status" hidden></p>
+        <p class="demo-note" id="demo-note" hidden><strong>Demo mode.</strong> The AI isn't connected, so only a few fixed phrases work.</p>
+
+        <div class="log" id="log" aria-live="polite">
+          <div class="welcome" id="welcome" hidden>
+            <p class="welcome-title">Namaste. What happened in the shop today?</p>
+            <div class="chips" id="chips"></div>
+          </div>
+        </div>
+
+        <footer class="console-dock" id="console-dock">
+          <p class="status" id="status" role="status"></p>
+          <div class="mic-row">
+            <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <button type="button" id="mic" class="mic" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3"/></svg>
+            </button>
+            <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <form id="composer" class="composer">
+            <input id="input" type="text" autocomplete="off" maxlength="4000" enterkeyhint="send" placeholder="Or type here…" aria-label="Type a message">
+            <button type="submit" id="send" class="icon-button" aria-label="Send">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 20.5 21 12 4 3.5V10l10 2-10 2v6.5Z"/></svg>
+            </button>
+          </form>
+          <p class="voice-engine" id="voice-engine"></p>
+        </footer>
+      </section>
+    </section>
+
+    <section class="app-book book-section" id="book" aria-label="Shop book">
+      <div class="book">
+        <aside class="week" aria-labelledby="week-title">
+          <div class="week-top">
+            <h3 id="week-title">Last 7 days</h3>
+            <button type="button" class="link-button" id="week-table-toggle" aria-pressed="false">Show as table</button>
+          </div>
+          <dl class="week-stats">
+            <div><dt>Sales</dt><dd id="week-sales">–</dd></div>
+            <div><dt>Spent</dt><dd id="week-expenses">–</dd></div>
+            <div><dt>Udhaar collected</dt><dd id="week-collected">–</dd></div>
+          </dl>
+          <ul class="legend" aria-hidden="true">
+            <li><i class="swatch swatch-sales"></i>Sales</li>
+            <li><i class="swatch swatch-expenses"></i>Spent</li>
+          </ul>
+          <div class="chart" id="week-chart" role="img" aria-label="Sales and spending for each of the last 7 days"></div>
+          <div class="chart-tip" id="chart-tip" hidden></div>
+          <table class="week-table" id="week-table" hidden>
+            <caption class="sr-only">Sales and spending, last 7 days</caption>
+            <thead><tr><th scope="col">Day</th><th scope="col" class="num">Sales</th><th scope="col" class="num">Spent</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </aside>
+
+        <div class="book-main">
+          <div class="tabs" role="tablist" aria-label="Shop book">
+            <button type="button" role="tab" id="tab-udhaar" aria-controls="panel-udhaar" aria-selected="true">Udhaar <span class="count" id="count-udhaar"></span></button>
+            <button type="button" role="tab" id="tab-stock" aria-controls="panel-stock" aria-selected="false" tabindex="-1">Stock <span class="count" id="count-stock"></span></button>
+            <button type="button" role="tab" id="tab-entries" aria-controls="panel-entries" aria-selected="false" tabindex="-1">Entries</button>
+            <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">Orders</button>
+            <button type="button" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false" tabindex="-1">Shop &amp; data</button>
+          </div>
+
+          <div class="panel" role="tabpanel" id="panel-udhaar" aria-labelledby="tab-udhaar" tabindex="0"></div>
+          <div class="panel" role="tabpanel" id="panel-stock" aria-labelledby="tab-stock" tabindex="0" hidden></div>
+          <div class="panel" role="tabpanel" id="panel-entries" aria-labelledby="tab-entries" tabindex="0" hidden></div>
+          <div class="panel" role="tabpanel" id="panel-plans" aria-labelledby="tab-plans" tabindex="0" hidden></div>
+          <div class="panel" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" tabindex="0" hidden>
+            <form class="profile-form" id="profile-form">
+              <h3>Shop details</h3>
+              <p class="hint">These appear on bills and payment reminders. You can also just tell Munshi.</p>
+              <div class="fields">
+                <label>Shop name<input name="name" autocomplete="organization" maxlength="200"></label>
+                <label>Type of business<input name="type" placeholder="kirana store, salon…" maxlength="200"></label>
+                <label>Owner's name<input name="owner_name" autocomplete="name" maxlength="200"></label>
+                <label>Phone<input name="phone" type="tel" autocomplete="tel" maxlength="200"></label>
+                <label class="wide">Address<input name="address" autocomplete="street-address" maxlength="200"></label>
+                <label>GSTIN <span class="opt">optional</span><input name="gstin" maxlength="20" autocapitalize="characters" spellcheck="false"></label>
+                <label>UPI ID <span class="opt">optional</span><input name="upi_id" maxlength="100" placeholder="name@okaxis" spellcheck="false" autocapitalize="off"></label>
+              </div>
+              <div class="form-row">
+                <button type="submit" class="btn btn-gold btn-sm">Save details</button>
+                <p class="form-status" id="profile-status" role="status"></p>
+              </div>
+            </form>
+            <div class="data-box">
+              <h3>Your data</h3>
+              <p class="hint">Download your books any time. A backup copy is also saved on this computer every day.</p>
+              <div class="downloads">
+                <a class="btn btn-line btn-sm" href="/api/export/transactions.csv" download>Ledger (CSV)</a>
+                <a class="btn btn-line btn-sm" href="/api/export/customers.csv" download>Customers (CSV)</a>
+                <a class="btn btn-line btn-sm" href="/api/export/stock.csv" download>Stock (CSV)</a>
+                <a class="btn btn-line btn-sm" href="/api/backup" download>Full backup</a>
+              </div>
+              <button type="button" class="btn btn-line btn-sm" id="lock" hidden>Lock Munshi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="lock-screen" id="lock-screen" hidden>
+    <form class="lock-card" id="lock-form" aria-labelledby="lock-title">
+      <span class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Munshi</span>
+      <h2 id="lock-title">Enter your PIN</h2>
+      <p>Your books are locked.</p>
+      <input id="lock-pin" type="password" inputmode="numeric" autocomplete="current-password" aria-label="PIN" required>
+      <button type="submit" class="btn btn-gold">Unlock</button>
+      <p class="lock-error" id="lock-error" role="alert"></p>
+    </form>
+  </div>
+
+  <script type="module" src="/app.js"></script>
+  <script type="module" src="/book.js"></script>
+</body>
+</html>

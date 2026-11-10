@@ -15,16 +15,39 @@ npm install
 ```
 
 ```bash
-npm run seed
-```
-
-```bash
 npm start
 ```
 
-Open http://localhost:3000 in Chrome or Edge. `npm run seed` adds a made-up sample shop and is optional. While editing code, use `npm run dev` instead of `npm start`: it restarts the server whenever you save a file.
+Open http://localhost:3000 in Chrome or Edge. While editing code, use `npm run dev` instead of `npm start`: it restarts the server whenever you save a file.
 
-Your own `.env` (API keys) and `data/` (the shop database) are never committed, so each person keeps their own.
+## The website
+
+| Page | What it is |
+|---|---|
+| `/` | The public site: the scroll-driven 3D story, features, and Get started |
+| `/signup`, `/login` | Register a shop, or sign in with its mobile number and password |
+| `/app` | The dashboard after signing in: the assistant beside the shop book. Signed out, it sends you to `/login` |
+| `/bill/<n>` | A sale's printable bill, for the signed-in shop only |
+
+## Put it online
+
+The repository includes a [Render](https://render.com) blueprint, [render.yaml](render.yaml):
+
+1. Sign in to Render with GitHub, choose **New → Blueprint**, and pick this repository.
+2. When asked, paste `GEMINI_API_KEY` (and `GNANI_API_KEY` for voice). They're stored by Render, never in the repository.
+3. Deploy. The site gets an `https://…onrender.com` address, and phones can use the microphone because it's HTTPS.
+
+The blueprint uses Render's paid Starter plan, because it attaches a 1 GB disk at `/var/data` for the shops' books. On the free plan there's no disk, so every restart or redeploy wipes all accounts and books; that's fine for a short demo, not for real shops. The server listens on `0.0.0.0` there (`MUNSHI_HOST`), answers health checks at `/healthz`, and marks its sign-in cookie `Secure` when served over HTTPS.
+
+## Shop accounts
+
+Each shop owner registers with the shop's name, their name, a mobile number and a password, then signs in with the number and password. Every shop's books live in their own database file (`data/shops/<id>.db`), so one shop can never see another's ledger, bills or exports. Passwords are stored only as salted scrypt hashes, sessions last 30 days and survive a server restart, and five wrong passwords pause sign-in for that number for a minute.
+
+**Try the demo shop** opens a shared, made-up kirana store with sample data, without registering. Anyone using it sees the same books.
+
+The older one-shop setup (one database, optional PIN) is still there with `MUNSHI_SINGLE_SHOP=1`.
+
+Your own `.env` (API keys) and `data/` (all shops' books) are never committed, so each person keeps their own.
 
 Without an API key the app runs in **demo mode**: a small pattern matcher stands in for the AI, so you can try the interface, but it only understands a few fixed Roman-script phrases.
 
@@ -42,8 +65,9 @@ Other settings, all optional:
 
 | Setting | What it does |
 |---|---|
-| `MUNSHI_PIN` | Locks the app behind a PIN (at least 4 characters). Needed before opening it to other devices. |
-| `MUNSHI_HOST` | Where the server listens. Default `127.0.0.1` (this computer only). Set `0.0.0.0` to reach it from a phone on the same Wi-Fi; the server refuses to start that way without `MUNSHI_PIN`. |
+| `MUNSHI_HOST` | Where the server listens. Default `127.0.0.1` (this computer only). Set `0.0.0.0` to reach it from a phone on the same Wi-Fi; shops sign in as usual. |
+| `MUNSHI_SINGLE_SHOP`, `MUNSHI_PIN` | `MUNSHI_SINGLE_SHOP=1` runs one shop without accounts; `MUNSHI_PIN` then locks it (required to listen beyond this computer). |
+| `MUNSHI_DATA_DIR` | Where accounts and every shop's books live. Default `data/`. |
 | `MUNSHI_PROVIDER` | `gemini` or `claude`, when both keys are set. |
 | `GEMINI_MODEL`, `GEMINI_THINKING` | Gemini model (default `gemini-3.5-flash-lite`; `gemini-3.8-flash` is newer but was often overloaded in testing) and thinking level (`minimal`, `low`, `medium`, `high`). |
 | `MUNSHI_MODEL`, `MUNSHI_EFFORT` | Claude model and effort (`low`, `medium`, `high`, `xhigh`, `max`). An invalid effort falls back to `medium` with a warning. |
@@ -88,14 +112,15 @@ npm test
 | [src/gemini.js](src/gemini.js) | Lets Google Gemini run that same loop, translating to and from its API |
 | [src/tools.js](src/tools.js) | Everything the assistant can do: 23 tools over the ledger and stock |
 | [src/db.js](src/db.js) | SQLite schema, and upgrades for databases from older versions |
-| [src/server.js](src/server.js) | HTTP API, streaming replies, PIN lock, bills, exports |
+| [src/server.js](src/server.js) | Pages, HTTP API, sign-in, streaming replies, bills, exports; opens each shop's own books |
+| [src/accounts.js](src/accounts.js) | Shop accounts: registration, hashed passwords, sessions |
 | [src/documents.js](src/documents.js) | Printable bills (with GST) and CSV exports |
 | [src/backup.js](src/backup.js) | Daily database backups |
 | [public/book.js](public/book.js) | The shop book: 7-day chart, udhaar, stock, entries, orders, settings |
 | [src/gnani.js](src/gnani.js) | Gnani Prisma speech-to-text and Timbre text-to-speech |
 | [public/audio.js](public/audio.js) | Turns microphone samples into the WAV files Gnani accepts |
 | [src/demo.js](src/demo.js) | The stand-in used when there's no API key |
-| [public/](public/) | The website, including the live assistant and voice |
+| [public/](public/) | The website: `index.html` (landing), `login.html` (sign in and register), `app.html` (dashboard) |
 | [public/scene.js](public/scene.js) | The 3D ledger, drawn with three.js. Skipped if the device has no WebGL |
 | [public/motion.js](public/motion.js) | Draggable cards, tilt and scroll reveals. Respects the reduced-motion setting |
 | [public/romanize.js](public/romanize.js) | Shows Hindi-script speech in English letters, so all on-screen text is Roman |
@@ -117,8 +142,8 @@ Decisions worth knowing before you change things:
 
 This is built to run on the shop's own computer, not as an online service.
 
-- **One business, one PIN.** `MUNSHI_PIN` protects it on a shop's Wi-Fi, but there are no separate user accounts, and one server holds one business's books. Putting it on the internet would need accounts, per-business data and HTTPS. Phones also need HTTPS for the microphone, so on a phone over plain Wi-Fi, typing works and voice doesn't.
-- **Sessions reset on restart.** After the server restarts, everyone enters the PIN again.
+- **One person per shop.** Each shop has one login; there are no staff accounts or roles yet, and no "forgot password" (there's no SMS or email to send a reset to).
+- **Not for the open internet yet.** Accounts and separate books are in place, but a public server would also need HTTPS. Phones also need HTTPS for the microphone, so on a phone over plain Wi-Fi, typing works and voice doesn't.
 - **Voice is one clip at a time.** Each spoken message is recorded, then sent to Gnani's REST API (30 seconds at most). Gnani also offers WebSocket streaming, which would show words as they're spoken and feel faster. Recording stops on a fixed loudness threshold, which may need tuning for a noisy shop.
 - **Without a Gnani key, voice falls back to the browser's speech features**, which work best in Chrome and Edge.
 - **Data leaves this computer.** Messages, plus the business data the assistant looks up, go to the Anthropic API. Voice recordings, reply text and customer names go to Gnani. Check this suits your customers' data and India's DPDP Act before real use.

@@ -98,8 +98,36 @@ function setUpPhotos() {
   }
 }
 
+/* ---------- Account: demo shop, and "Open your shop" when signed in ---------- */
+
+function setUpAccount() {
+  const demo = document.getElementById("landing-demo");
+  demo?.addEventListener("click", async () => {
+    demo.disabled = true;
+    try {
+      const res = await fetch("/api/auth/demo", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      // A single-shop setup has no demo sign-in; its dashboard is open anyway.
+      location.href = res.ok || res.status === 404 ? "/app" : "/login";
+    } catch {
+      location.href = "/login";
+    }
+  });
+  fetch("/api/state").then((r) => r.json()).then((state) => {
+    if (state.auth === "accounts" && !state.signedIn) return;
+    const area = document.getElementById("nav-account");
+    const open = Object.assign(document.createElement("a"), { className: "btn btn-gold btn-sm", href: "/app", textContent: "Open your shop" });
+    if (state.account?.shop_name) {
+      const name = Object.assign(document.createElement("span"), { className: "account-name", textContent: state.account.shop_name });
+      area?.replaceChildren(name, open);
+    } else {
+      area?.replaceChildren(open);
+    }
+  }).catch(() => {});
+}
+
 setUpPhotos();
 setUpReveals();
+setUpAccount();
 
 /* ---------- The 3D scene ---------- */
 
