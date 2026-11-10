@@ -554,6 +554,19 @@ html:not(.has-scene) .story-pin { background: radial-gradient(700px 500px at 75%
 .composer input::placeholder { color: var(--muted-l); }
 .composer .icon-button { color: var(--text-l); }
 .voice-engine { font-size: 12px; line-height: 1.3; color: var(--muted-l); text-align: center; }
+/* Mic check: a panel over the assistant with a device picker and a live level bar */
+.mic-check { position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; gap: 14px; padding: 28px 28px 24px; overflow-y: auto; background: #fff; color: var(--text-l); }
+.mic-check h3 { font: 400 32px/1.1 var(--serif); }
+.mic-check-hint, .mic-check-using, .mic-check-note { color: var(--muted-l); font-size: 14px; }
+.mic-check-using span { color: var(--text-l); font-weight: 500; }
+.mic-check-label { display: block; font-size: 13px; font-weight: 500; color: var(--muted-l); }
+.mic-check-label select { display: block; width: 100%; min-height: 48px; margin-top: 6px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--ivory); color: var(--text-l); font: inherit; font-size: 15px; }
+.mic-check-meter { height: 14px; border-radius: 99px; background: var(--ivory-2); overflow: hidden; }
+.mic-check-meter i { display: block; width: 0; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--jade), var(--gold)); transition: width .08s linear; }
+.mic-check-status { min-height: 22px; font-size: 14.5px; font-weight: 500; }
+.mic-check-status.is-good { color: #1d7a5b; }
+.mic-check-status.is-bad { color: var(--danger); }
+.mic-check .btn { margin-top: auto; }
 .engine-switch { min-height: 32px; padding: 0 2px; border: 0; background: none; color: var(--gold-ink); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Shop book ---------- */
