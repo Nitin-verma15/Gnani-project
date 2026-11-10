@@ -96,14 +96,58 @@ CREATE TABLE IF NOT EXISTS chat_log (
   action_ids TEXT NOT NULL DEFAULT '[]',
   created_at TEXT NOT NULL
 );
+
+-- Stock. Like balances, quantity on hand is never stored: it is the sum of the
+-- movements, so undoing a sale or a delivery puts the count back by itself.
+CREATE TABLE IF NOT EXISTS items (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  unit TEXT NOT NULL DEFAULT 'pcs',
+  price_paise INTEGER,       -- selling price per unit, if known
+  low_at REAL,               -- warn when on-hand falls to this or below
+  created_at TEXT NOT NULL,
+  voided_at TEXT
+);
+CREATE TABLE IF NOT EXISTS stock_moves (
+  id INTEGER PRIMARY KEY,
+  item_id INTEGER NOT NULL REFERENCES items(id),
+  qty REAL NOT NULL CHECK (qty <> 0), -- positive in, negative out
+  reason TEXT NOT NULL,
+  transaction_id INTEGER REFERENCES transactions(id),
+  created_at TEXT NOT NULL,
+  voided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_moves_item ON stock_moves(item_id);
+CREATE INDEX IF NOT EXISTS idx_moves_tx ON stock_moves(transaction_id);
 `;
+
+// Columns added after the first release. Older databases get them on open.
+const ADDED_COLUMNS = [
+  ["business", "phone", "TEXT"],
+  ["business", "address", "TEXT"],
+  ["business", "gstin", "TEXT"],
+  ["business", "upi_id", "TEXT"],
+  ["transactions", "gst_rate", "REAL"],
+  ["chat_log", "links", "TEXT NOT NULL DEFAULT '[]'"],
+  ["threads", "provider", "TEXT NOT NULL DEFAULT 'anthropic'"],
+];
 
 export function openDb(path) {
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
+  for (const [table, column, type] of ADDED_COLUMNS) {
+    const has = db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column);
+    if (!has) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
   return db;
+}
+
+/** Writes a consistent copy of the whole database to `path` (which must not exist). */
+export function backupTo(db, path) {
+  mkdirSync(dirname(path), { recursive: true });
+  db.prepare("VACUUM INTO ?").run(path);
 }
 
 export function tx(db, fn) {

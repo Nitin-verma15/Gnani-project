@@ -21,7 +21,15 @@ const run = (name, input) => {
   if (out.error) throw new Error(`${name}: ${out.error}`);
 };
 
-run("update_business_profile", { name: "Sharma Kirana Store", type: "kirana store", owner_name: "Sharma ji" });
+run("update_business_profile", {
+  name: "Sharma Kirana Store", type: "kirana store", owner_name: "Sharma ji",
+  phone: "90000 00000", address: "12 Main Bazaar, Sample Nagar", upi_id: "sharmastore@upi",
+});
+run("set_item", { name: "Basmati rice 1kg", unit: "packet", price: 120, low_stock_at: 10, quantity_on_hand: 40 });
+run("set_item", { name: "Toor dal 1kg", unit: "packet", price: 160, low_stock_at: 8, quantity_on_hand: 9 });
+run("set_item", { name: "Sunflower oil 1L", unit: "bottle", price: 150, low_stock_at: 6, quantity_on_hand: 18 });
+run("set_item", { name: "Sugar", unit: "kg", price: 45, low_stock_at: 15, quantity_on_hand: 50 });
+run("set_item", { name: "Parle-G biscuit", unit: "packet", price: 10, low_stock_at: 30, quantity_on_hand: 24 });
 run("add_customer", { name: "Ramesh Gupta", phone: "90000 00001" });
 run("add_customer", { name: "Sunita Devi", phone: "90000 00002" });
 run("add_customer", { name: "Imran Khan", phone: "90000 00003" });
@@ -36,6 +44,8 @@ const sales = [
 for (const [days, amount, paid, customer] of sales) {
   run("record_sale", { amount, paid_amount: paid, date: ago(days), ...(customer ? { customer_name: customer } : {}) });
 }
+run("record_sale", { paid_in_full: true, customer_name: "Lakshmi Iyer", items: [{ item_name: "Basmati rice", quantity: 2 }, { item_name: "Sunflower oil", quantity: 1 }], date: ago(0) });
+run("record_sale", { amount: 590, paid_amount: 590, gst_rate: 18, description: "Gift hamper", date: ago(0) });
 run("record_payment", { amount: 500, customer_name: "Ramesh Gupta", method: "upi", date: ago(2) });
 run("record_expense", { amount: 8000, category: "stock", description: "Weekly wholesale purchase", date: ago(7) });
 run("record_expense", { amount: 6500, category: "stock", description: "Weekly wholesale purchase", date: ago(1) });

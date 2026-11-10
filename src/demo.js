@@ -6,7 +6,7 @@
  */
 import { romanize } from "../public/romanize.js";
 
-const HELP = "Demo mode mein main kuch hi baatein samajhta hoon. Try: 'Ramesh ko 500 udhaar diya', 'Ramesh ne 200 diye', '300 ka kharcha', '1000 ki sale', 'aaj ka hisaab', 'kitna udhaar baaki hai', or 'undo'.";
+const HELP = "Demo mode mein main kuch hi baatein samajhta hoon. Try: 'Ramesh ko 500 udhaar diya', 'Ramesh ne 200 diye', '300 ka kharcha', '1000 ki sale', 'aaj ka hisaab', 'kitna udhaar baaki hai', 'stock dikhao', or 'undo'.";
 
 function parse(raw) {
   const text = romanize(raw).toLowerCase().replace(/(?<=\d),(?=\d)/g, "");
@@ -27,6 +27,7 @@ function parse(raw) {
   if ((m = text.match(/(\d+(?:\.\d+)?).*(?:\bsale\b|bikri|becha|sold)/))) {
     return call("record_sale", { amount: num(m[1]), paid_amount: num(m[1]) });
   }
+  if (/\b(stock|maal|inventory)\b/.test(text)) return call("list_stock", {});
   if (/udh|baa?ki|pending/.test(text)) return call("list_pending_payments", {});
   if (/hisaab|hisab|summary|today/.test(text)) return call("get_business_summary", {});
   return null;
@@ -48,6 +49,11 @@ function replyFor(toolName, content, isError) {
     case "list_pending_payments":
       if (!r.customers.length) return "Kisi ka udhaar baaki nahi hai.";
       return `Kul ${inr(r.total_outstanding)} baaki hai. Sabse zyada ${r.customers[0].name} ka, ${inr(r.customers[0].owes)}.`;
+    case "list_stock": {
+      if (!r.items.length) return "Abhi koi stock item save nahi hai.";
+      const low = r.items.filter((i) => i.low);
+      return `${r.items.length} items stock mein hain.${low.length ? ` Kam hai: ${low.map((i) => `${i.name} (${i.on_hand} ${i.unit})`).join(", ")}.` : " Sab theek hai."}`;
+    }
     case "get_business_summary":
       return `Aaj ki sale ${inr(r.sales)}, kharcha ${inr(r.expenses)}. Kul udhaar baaki ${inr(r.total_outstanding_now)}.`;
     default:
@@ -58,6 +64,7 @@ function replyFor(toolName, content, isError) {
 export function createDemoClient() {
   let nextId = 1;
   return {
+    provider: "demo",
     beta: {
       messages: {
         stream({ messages }) {

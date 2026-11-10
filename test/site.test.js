@@ -32,9 +32,23 @@ test("every local file the site needs is actually served", async () => {
   }
 });
 
-test("card boards are positioned, or thrown cards would fly off the page", () => {
-  assert.match(read("style.css"), /\[data-board\]\s*\{\s*position:\s*relative;/);
-  assert.ok(read("index.html").match(/data-board>/g).length >= 2);
+test("every element the scripts look up by id is on the page", () => {
+  const html = read("index.html");
+  const ids = new Set();
+  for (const file of ["app.js", "book.js", "motion.js"]) {
+    for (const m of read(file).matchAll(/(?:\$|getElementById)\("([\w-]+)"\)/g)) ids.add(m[1]);
+  }
+  assert.ok(ids.size > 20, "found the lookups");
+  for (const id of ids) assert.match(html, new RegExp(`id="${id}"`), `#${id} is missing from index.html`);
+});
+
+test("the scroll story has one chapter per progress label, in order", () => {
+  const html = read("index.html");
+  const chapters = [...html.matchAll(/data-chapter="(\d)"/g)].map((m) => Number(m[1]));
+  assert.deepEqual(chapters, [0, 1, 2, 3, 4]);
+  const rail = html.match(/<ol class="story-rail"[^>]*>([\s\S]*?)<\/ol>/)[1].match(/<li>/g);
+  assert.equal(rail.length, chapters.length);
+  assert.match(read("motion.js"), /CHAPTERS = \[0, [\d., ]+\]/);
 });
 
 test("every photo has alt text and credits its photographer", () => {
