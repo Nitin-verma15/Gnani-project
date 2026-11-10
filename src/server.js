@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile, unlink } from "node:fs/promises";
+import { readFile, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -85,7 +85,7 @@ function shopContext(db) {
  *  - accounts: each shop registers and signs in; every shop has its own database.
  *  - db (single shop): one set of books, optionally behind a PIN.
  */
-export function createApp({ db = null, accounts = null, client, demo, gnani = null, pin = null }) {
+export function createApp({ db = null, accounts = null, client, demo, gnani = null, pin = null, lastSpeechPath = null }) {
   if (!db && !accounts) throw new Error("createApp needs either db or accounts");
   const single = db ? shopContext(db) : null;
   const shops = new Map(); // shop id -> context, opened on first use
@@ -284,6 +284,8 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
     // Quiet microphones record speech too softly to be heard, so bring it up to a normal level.
     const before = wavLevels(audio);
     const { buffer: louder, gain } = normalizeWav(audio);
+    // On a local run, keep the latest recording (overwritten each time) so a mic problem can be checked.
+    if (lastSpeechPath) writeFile(lastSpeechPath, audio).catch(() => {});
     const transcript = await gnani.transcribe({ audio: louder, mode, keyterms });
     // Enough to tell a silent mic from "Gnani heard nothing", without logging what was said.
     const seconds = Math.max(0, (audio.length - 44) / 32000).toFixed(1);
@@ -486,7 +488,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     ? createGnani({ apiKey: process.env.GNANI_API_KEY, ...(process.env.GNANI_BASE_URL ? { baseUrl: process.env.GNANI_BASE_URL } : {}) })
     : null;
 
-  const app = createApp({ db, accounts, client, demo: !hasCredentials, gnani, pin });
+  const lastSpeechPath = loopback ? join(dataDir, "last-speech.wav") : null;
+  const app = createApp({ db, accounts, client, demo: !hasCredentials, gnani, pin, lastSpeechPath });
 
   // A copy of every shop's books each day, in its own folder.
   const backupDir = process.env.MUNSHI_BACKUP_DIR || join(dataDir, "backups");
