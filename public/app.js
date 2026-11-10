@@ -16,6 +16,11 @@ const COPY = {
   micBlocked: "Microphone is blocked. Allow it in browser settings, or type below.",
   noMic: "Voice needs Chrome or Edge. You can type below.",
   speechFailed: "Couldn't make that out. Please type it.",
+  noMicFound: "Browser ko mic nahi mila. Open Mic check below to pick your microphone.",
+  browserSpeechOffline: "Browser speech needs internet. Use Gnani mic, or check your connection.",
+  micCheckSilent: "Is mic se koi awaaz nahi aa rahi. Pick another mic above, or check it isn't muted (Windows Settings > System > Sound > Input).",
+  micCheckWorking: "Mic is working. Speak and watch the bar.",
+  micCheckWaiting: "Speak now and watch the bar…",
   offline: "Couldn't reach the server. Please try again.",
   undone: "Removed",
   undoFailed: "That couldn't be undone.",
@@ -343,8 +348,12 @@ function startListening() {
       setStatus(COPY.micBlocked);
     } else if (failure === "aborted") {
       setStatus();
+    } else if (failure === "audio-capture") {
+      setStatus(COPY.noMicFound);
+    } else if (failure === "network") {
+      setStatus(COPY.browserSpeechOffline);
     } else if (failure && failure !== "no-speech") {
-      setStatus(COPY.speechFailed);
+      setStatus(`${COPY.speechFailed} (${failure})`);
     } else {
       setStatus(COPY.noSpeech);
     }
@@ -372,6 +381,28 @@ const GIVE_UP_WITHOUT_SPEECH_MS = 8000;
 const MAX_RECORDING_MS = 28000; // Prisma's REST limit is 30 seconds
 let recording = null;
 
+// The microphone the owner picked in Mic check; empty means the browser's default.
+let micDeviceId = store.get("micDevice", "");
+
+/**
+ * Opens the chosen microphone. Auto gain lifts quiet laptop mics; the browser's noise
+ * suppression stays off because on some built-in mic arrays it removes speech along with
+ * the noise, and Gnani copes with background noise itself.
+ */
+async function openMic() {
+  const audio = { channelCount: 1, echoCancellation: true, noiseSuppression: false, autoGainControl: true };
+  if (micDeviceId) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: { ...audio, deviceId: { exact: micDeviceId } } });
+    } catch (err) {
+      if (err.name !== "OverconstrainedError" && err.name !== "NotFoundError") throw err;
+      micDeviceId = ""; // the saved mic was unplugged; fall back to the default
+      store.set("micDevice", "");
+    }
+  }
+  return navigator.mediaDevices.getUserMedia({ audio });
+}
+
 async function startGnaniRecording() {
   stopSpeaking();
   const session = { chunks: [], heard: false, stopped: false };
@@ -390,9 +421,7 @@ async function startGnaniRecording() {
   };
 
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
+    stream = await openMic();
     if (session.stopped) return cleanUp(); // tapped again while the permission prompt was up
     context = new AudioContext();
     await context.resume();
@@ -401,7 +430,9 @@ async function startGnaniRecording() {
   } catch (err) {
     console.error(err);
     cleanUp();
-    return setStatus(err.name === "NotAllowedError" ? COPY.micBlocked : COPY.speechFailed);
+    if (err.name === "NotAllowedError") return setStatus(COPY.micBlocked);
+    if (err.name === "NotFoundError" || err.name === "NotReadableError") return setStatus(COPY.noMicFound);
+    return setStatus(`${COPY.speechFailed} (${err.name})`);
   }
 
   const rate = context.sampleRate;
@@ -579,7 +610,100 @@ function renderVoiceEngine() {
     });
     line.append(" · ", swap);
   }
+  if (navigator.mediaDevices?.getUserMedia) {
+    const check = document.createElement("button");
+    check.type = "button";
+    check.className = "engine-switch";
+    check.textContent = "Mic check";
+    check.addEventListener("click", openMicCheck);
+    line.append(" · ", check);
+  }
 }
+
+/* ---------- Mic check: pick the microphone and see its level live ---------- */
+
+let micCheck = null;
+
+async function openMicCheck() {
+  if (listening) return;
+  stopSpeaking();
+  $("mic-check").hidden = false;
+  await startMicCheck();
+}
+
+function closeMicCheck() {
+  stopMicCheck();
+  $("mic-check").hidden = true;
+  setStatus();
+}
+
+function stopMicCheck() {
+  if (!micCheck) return;
+  cancelAnimationFrame(micCheck.frame);
+  micCheck.stream.getTracks().forEach((t) => t.stop());
+  micCheck.context.close().catch(() => {});
+  micCheck = null;
+}
+
+async function startMicCheck() {
+  stopMicCheck();
+  const status = $("mic-check-status");
+  const bar = $("mic-check-bar");
+  bar.style.width = "0%";
+  status.textContent = COPY.micCheckWaiting;
+  status.className = "mic-check-status";
+  let stream;
+  try {
+    stream = await openMic();
+  } catch (err) {
+    status.textContent = err.name === "NotAllowedError" ? COPY.micBlocked : `${COPY.noMicFound} (${err.name})`;
+    status.className = "mic-check-status is-bad";
+    return;
+  }
+  // Device names are only visible once the browser has mic permission, so list them now.
+  const devices = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audioinput");
+  const active = stream.getAudioTracks()[0]?.getSettings().deviceId ?? "";
+  const select = $("mic-check-device");
+  select.replaceChildren(...devices.map((d, i) => Object.assign(document.createElement("option"), {
+    value: d.deviceId, textContent: d.label || `Microphone ${i + 1}`, selected: d.deviceId === (micDeviceId || active),
+  })));
+  $("mic-check-name").textContent = stream.getAudioTracks()[0]?.label || "Default microphone";
+
+  const context = new AudioContext();
+  await context.resume();
+  const analyser = context.createAnalyser();
+  analyser.fftSize = 2048;
+  context.createMediaStreamSource(stream).connect(analyser);
+  const data = new Float32Array(analyser.fftSize);
+  const started = performance.now();
+  let loudest = 0;
+  micCheck = { stream, context, frame: 0 };
+  const tick = () => {
+    analyser.getFloatTimeDomainData(data);
+    let sum = 0;
+    for (const v of data) sum += v * v;
+    const level = Math.sqrt(sum / data.length);
+    loudest = Math.max(loudest, level);
+    bar.style.width = `${Math.min(100, Math.sqrt(level / 0.12) * 100).toFixed(0)}%`;
+    const elapsed = performance.now() - started;
+    if (loudest > 0.01) {
+      status.textContent = COPY.micCheckWorking;
+      status.className = "mic-check-status is-good";
+    } else if (elapsed > 3500 && loudest < 0.0015) {
+      status.textContent = COPY.micCheckSilent;
+      status.className = "mic-check-status is-bad";
+    }
+    micCheck.frame = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+$("mic-check-device").addEventListener("change", (event) => {
+  micDeviceId = event.target.value;
+  store.set("micDevice", micDeviceId);
+  startMicCheck();
+});
+$("mic-check-close").addEventListener("click", closeMicCheck);
 
 /* ---------- Wiring ---------- */
 

@@ -84,6 +84,19 @@
           </form>
           <p class="voice-engine" id="voice-engine"></p>
         </footer>
+
+        <div class="mic-check" id="mic-check" role="dialog" aria-labelledby="mic-check-title" hidden>
+          <h3 id="mic-check-title">Mic check</h3>
+          <p class="mic-check-hint">Speak normally. If the bar doesn't move, pick another microphone.</p>
+          <label class="mic-check-label">Microphone
+            <select id="mic-check-device"></select>
+          </label>
+          <p class="mic-check-using">Listening with: <span id="mic-check-name">…</span></p>
+          <div class="mic-check-meter" aria-hidden="true"><i id="mic-check-bar"></i></div>
+          <p class="mic-check-status" id="mic-check-status" role="status"></p>
+          <p class="mic-check-note">The Gnani mic uses the microphone chosen here. The browser mic always uses your computer's default microphone (Windows Settings &gt; System &gt; Sound &gt; Input).</p>
+          <button type="button" class="btn btn-ink" id="mic-check-close">Done</button>
+        </div>
       </section>
     </section>
 

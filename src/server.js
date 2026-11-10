@@ -15,6 +15,7 @@ import { renderBill, toCsv } from "./documents.js";
 import { dailyBackup } from "./backup.js";
 import { openAccounts, AccountError, DEMO_SHOP_ID, normalizePhone } from "./accounts.js";
 import { seedSample } from "./seed.js";
+import { wavLevels, normalizeWav } from "./wav.js";
 import { romanize } from "../public/romanize.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -280,10 +281,14 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
       `SELECT name FROM (SELECT name, id FROM customers WHERE voided_at IS NULL ORDER BY id DESC LIMIT 150)
        UNION ALL SELECT name FROM (SELECT name FROM items WHERE voided_at IS NULL ORDER BY id DESC LIMIT 50)`,
     ).all().map((c) => c.name);
-    const transcript = await gnani.transcribe({ audio, mode, keyterms });
-    // Enough to tell "no audio arrived" from "Gnani heard nothing", without logging what was said.
+    // Quiet microphones record speech too softly to be heard, so bring it up to a normal level.
+    const before = wavLevels(audio);
+    const { buffer: louder, gain } = normalizeWav(audio);
+    const transcript = await gnani.transcribe({ audio: louder, mode, keyterms });
+    // Enough to tell a silent mic from "Gnani heard nothing", without logging what was said.
     const seconds = Math.max(0, (audio.length - 44) / 32000).toFixed(1);
-    console.log(`Speech (${mode}): ${seconds}s of audio, ${transcript ? `${transcript.length} characters heard` : "no words heard"}`);
+    const level = before ? `, level ${before.peak.toFixed(3)}${gain > 1 ? ` boosted ${gain.toFixed(1)}x` : ""}` : "";
+    console.log(`Speech (${mode}): ${seconds}s of audio${level}, ${transcript ? `${transcript.length} characters heard` : "no words heard"}`);
     json(res, 200, { transcript: romanize(transcript) });
   }
 
