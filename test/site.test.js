@@ -12,7 +12,7 @@ const read = (file) => readFileSync(new URL(`../public/${file}`, import.meta.url
 const PAGES = {
   "index.html": ["motion.js"],
   "login.html": ["login.js"],
-  "app.html": ["app.js", "book.js"],
+  "app.html": ["app.js", "book.js", "call.js"],
 };
 
 test("every page, and every local file the pages need, is actually served", async () => {

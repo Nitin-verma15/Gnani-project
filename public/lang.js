@@ -3,7 +3,7 @@
 // version is whatever the page was written with. Scripts use pick() for their own text
 // and onLang() to redraw when the visitor switches. The choice is remembered per browser.
 
-const KEY = "countr-lang";
+const KEY = "counterbook-lang";
 const LANGS = ["hinglish", "english"];
 let current = "hinglish";
 try {

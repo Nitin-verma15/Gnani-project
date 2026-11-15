@@ -64,7 +64,7 @@ function requireText(value, label) {
   return text;
 }
 
-/** WhatsApp "click to chat" link. The owner sends it from their own phone; nothing is sent by Countr. */
+/** WhatsApp "click to chat" link. The owner sends it from their own phone; nothing is sent by Counterbook. */
 export function whatsappLink(phone, text) {
   let digits = String(phone ?? "").replace(/\D/g, "");
   if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
@@ -966,6 +966,8 @@ export function createTools(db, { now = () => new Date() } = {}) {
     },
     undoAction,
     glance,
+    /** Today's totals, for the nightly call. */
+    todayTotals: () => periodTotals(today(), today()),
     overview,
     billData,
     exportRows,

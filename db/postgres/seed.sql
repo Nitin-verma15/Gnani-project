@@ -2,7 +2,7 @@
 -- (India time), so the numbers always look current. Every name and number is invented.
 -- The same seed value gives the same data every time.
 --
--- WARNING: this empties every Munshi table first. Run it only on a demo database.
+-- WARNING: this empties every Counterbook table first. Run it only on a demo database.
 
 BEGIN;
 

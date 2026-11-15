@@ -92,11 +92,11 @@ export function renderBill(bill) {
     </tbody>
   </table>
   ${bill.upi_url ? `<div class="pay"><span>Pay ${money(bill.due)} by UPI to <strong>${escapeHtml(b.upi_id)}</strong></span><a href="${escapeHtml(bill.upi_url)}">Pay with a UPI app</a></div>` : ""}
-  <footer>Thank you! · Made with Countr</footer>
+  <footer>Thank you! · Made with Counterbook</footer>
 </main>
 <div class="actions">
   <button type="button" onclick="print()">Print or save as PDF</button>
-  <a class="alt" href="/app">Back to Countr</a>
+  <a class="alt" href="/app">Back to Counterbook</a>
 </div>
 </body>
 </html>`;

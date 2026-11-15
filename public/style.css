@@ -1,4 +1,4 @@
-/* Countr. Near-black, warm ivory and one champagne-gold accent. Instrument Serif speaks,
+/* Counterbook. Near-black, warm ivory and one champagne-gold accent. Instrument Serif speaks,
    Geist does the work, Geist Mono keeps the numbers in line. */
 :root {
   color-scheme: dark;
@@ -826,4 +826,60 @@ html:not(.has-scene) .story-pin { background: radial-gradient(700px 500px at 75%
   .app-actions { gap: 6px; margin-left: auto; }
   /* The shop's name is on the assistant card just below, so the narrow header drops it. */
   .app-shop { display: none; }
+}
+
+/* ---------- Nightly hisaab call ---------- */
+.call-box { padding-block: 20px; border-top: 1px solid var(--line-d); }
+.call-box h3 { font: 400 26px/1.2 var(--serif); }
+.call-box .hint { margin-top: 4px; }
+.call-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-block: 16px; }
+.switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 15px; }
+.switch input { width: 20px; height: 20px; accent-color: var(--gold); }
+.call-time-label { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted-d); }
+.call-time-label input { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--ink-3); box-shadow: inset 0 0 0 1px var(--line-d); color: var(--text-d); font: 500 15px var(--mono); color-scheme: dark; }
+.call-time-label input:focus { outline: 0; box-shadow: inset 0 0 0 1px var(--gold); }
+.call-time-label input:disabled { opacity: .45; }
+.call-note { margin-top: 10px; font-size: 13px; }
+
+.call-screen {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(120% 80% at 50% 0%, #2a2418 0%, var(--ink) 60%);
+  animation: call-in .35s var(--ease);
+}
+@keyframes call-in { from { opacity: 0; transform: scale(1.02); } }
+.call-card { display: flex; flex-direction: column; align-items: center; width: min(100%, 440px); max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); text-align: center; }
+/* The words scroll inside the card, so the call buttons always stay on screen. */
+.call-card > :not(.call-lines) { flex-shrink: 0; }
+.call-avatar {
+  display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%;
+  background: var(--ink-3); box-shadow: 0 0 0 1px var(--line-d2);
+}
+.call-avatar .logo-mark { transform: scale(1.8); }
+.call-screen[data-phase="ringing"] .call-avatar { animation: call-pulse 1.6s ease-out infinite; }
+@keyframes call-pulse {
+  0% { box-shadow: 0 0 0 1px var(--line-d2), 0 0 0 0 rgb(207 174 114 / .45); }
+  100% { box-shadow: 0 0 0 1px var(--line-d2), 0 0 0 34px rgb(207 174 114 / 0); }
+}
+.call-who { margin-top: 22px; font: 400 40px/1.1 var(--serif); color: var(--text-d); }
+.call-what { margin-top: 6px; color: var(--muted-d); font-size: 15px; }
+.call-timer { min-height: 22px; margin-top: 4px; color: var(--gold); font: 500 15px var(--mono); }
+.call-lines { display: grid; align-content: start; gap: 10px; flex: 1 1 auto; min-height: 0; width: 100%; margin: 18px 0 0; padding: 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; text-align: left; }
+.call-lines:empty { display: none; }
+.call-lines li { font-family: var(--sans); font-style: normal; padding: 10px 14px; border-radius: 12px; background: var(--ink-2); color: var(--muted-d); font-size: 16px; line-height: 1.45; transition: color .3s, background .3s; }
+.call-lines li.saying { background: var(--ink-3); color: var(--text-d); box-shadow: inset 3px 0 0 var(--gold); }
+.call-lines li.said { color: var(--text-d); }
+.call-actions { display: flex; justify-content: center; gap: 56px; margin-top: 28px; }
+.call-btn { display: grid; place-items: center; width: 72px; height: 72px; border: 0; border-radius: 50%; color: #fff; cursor: pointer; transition: transform .15s; }
+.call-btn:hover { transform: scale(1.06); }
+.call-btn:active { transform: scale(.96); }
+.call-btn[hidden] { display: none; }
+.call-answer { background: var(--jade); }
+.call-screen[data-phase="ringing"] .call-answer { animation: call-wiggle 1.2s ease-in-out infinite; }
+@keyframes call-wiggle { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-12deg); } 80% { transform: rotate(10deg); } 90% { transform: rotate(-6deg); } }
+.call-decline { background: var(--danger); }
+.call-decline svg { transform: rotate(0); }
+.call-screen[data-phase="ended"] .call-actions { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .call-screen, .call-screen[data-phase="ringing"] .call-avatar, .call-screen[data-phase="ringing"] .call-answer { animation: none; }
 }

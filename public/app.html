@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0b0c">
-  <meta name="description" content="Countr is a voice-first AI ledger for small businesses in India. Say what happened at the counter, in English, Hindi or Hinglish, and it keeps the books.">
-  <title>Your shop · Countr</title>
+  <meta name="description" content="Counterbook is a voice-first AI ledger for small businesses in India. Say what happened at the counter, in English, Hindi or Hinglish, and it keeps the books.">
+  <title>Your shop · Counterbook</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Caveat:wght@500;700&display=swap">
@@ -17,9 +17,9 @@
 
   <header class="app-top">
     <div class="app-top-inner">
-      <a class="logo" href="/" aria-label="Countr home">
+      <a class="logo" href="/" aria-label="Counterbook home">
         <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span>Countr</span>
+        <span>Counterbook</span>
       </a>
       <div class="app-shop">
         <span class="app-shop-name" id="app-shop-name"></span>
@@ -142,7 +142,7 @@
           <div class="panel" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" tabindex="0" hidden>
             <form class="profile-form" id="profile-form">
               <h3>Shop details</h3>
-              <p class="hint">These appear on bills and payment reminders. You can also just tell Countr.</p>
+              <p class="hint">These appear on bills and payment reminders. You can also just tell Counterbook.</p>
               <div class="fields">
                 <label>Shop name<input name="name" autocomplete="organization" maxlength="200"></label>
                 <label>Type of business<input name="type" placeholder="kirana store, salon…" maxlength="200"></label>
@@ -157,6 +157,19 @@
                 <p class="form-status" id="profile-status" role="status"></p>
               </div>
             </form>
+            <section class="call-box" aria-labelledby="call-box-title">
+              <h3 id="call-box-title" data-en="Nightly hisaab call">Raat ka hisaab call</h3>
+              <p class="hint" data-en="At closing time, Counterbook rings and reads out the day: sales, who to collect from tomorrow, what's due and low stock.">Dukaan band hone ke time Counterbook call karke din ka hisaab sunata hai: sale, kal kisse paise lene hain, kya deliver karna hai aur kya stock kam hai.</p>
+              <div class="call-settings">
+                <label class="switch"><input type="checkbox" id="call-enabled"> <span data-en="Call me every night">Har raat call karo</span></label>
+                <label class="call-time-label"><span data-en="at">kitne baje</span> <input type="time" id="call-time" value="21:00" step="300"></label>
+              </div>
+              <div class="form-row">
+                <button type="button" class="btn btn-gold btn-sm" id="call-now" data-en="Call me now">Abhi call karo</button>
+                <p class="form-status" id="call-status" role="status"></p>
+              </div>
+              <p class="hint call-note" data-en="It rings here while Counterbook is open in a browser tab, even in the background. Calls to a phone number would need a telephony service.">Yeh call yahin bajta hai jab Counterbook browser tab mein khula ho, peeche bhi chale toh. Phone number par call ke liye telephony service chahiye.</p>
+            </section>
             <div class="data-box">
               <h3>Your data</h3>
               <p class="hint">Download your books any time. A backup copy is also saved on this computer every day.</p>
@@ -166,7 +179,7 @@
                 <a class="btn btn-line btn-sm" href="/api/export/stock.csv" download>Stock (CSV)</a>
                 <a class="btn btn-line btn-sm" href="/api/backup" download>Full backup</a>
               </div>
-              <button type="button" class="btn btn-line btn-sm" id="lock" hidden>Lock Countr</button>
+              <button type="button" class="btn btn-line btn-sm" id="lock" hidden>Lock Counterbook</button>
             </div>
           </div>
         </div>
@@ -174,9 +187,27 @@
     </section>
   </main>
 
+  <div class="call-screen" id="call-screen" role="dialog" aria-modal="true" aria-labelledby="call-who" hidden>
+    <div class="call-card">
+      <div class="call-avatar" aria-hidden="true"><span class="logo-mark"><i></i><i></i><i></i><i></i></span></div>
+      <p class="call-who" id="call-who">Counterbook</p>
+      <p class="call-what" id="call-what" data-en="Today's hisaab">Aaj ka hisaab</p>
+      <p class="call-timer" id="call-timer" aria-live="polite"></p>
+      <ol class="call-lines" id="call-lines" aria-live="polite"></ol>
+      <div class="call-actions">
+        <button type="button" class="call-btn call-decline" id="call-decline" data-en-label="Decline" aria-label="Kaato">
+          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M12 9c-1.6 0-3.2.25-4.7.73v3.1c0 .4-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85a.98.98 0 0 1-1.39-.02L.29 13.08a.97.97 0 0 1 0-1.38C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.7c.38.37.39.98.01 1.38l-2.4 2.48c-.37.38-.98.39-1.38.02a11.3 11.3 0 0 0-2.67-1.85.98.98 0 0 1-.56-.9v-3.1C15.2 9.25 13.6 9 12 9Z"/></svg>
+        </button>
+        <button type="button" class="call-btn call-answer" id="call-answer" data-en-label="Answer" aria-label="Uthao">
+          <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.58.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.6 21 3 13.4 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.46.57 3.58.11.35.03.74-.25 1.02L6.6 10.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="lock-screen" id="lock-screen" hidden>
     <form class="lock-card" id="lock-form" aria-labelledby="lock-title">
-      <span class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Countr</span>
+      <span class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Counterbook</span>
       <h2 id="lock-title">Enter your PIN</h2>
       <p>Your books are locked.</p>
       <input id="lock-pin" type="password" inputmode="numeric" autocomplete="current-password" aria-label="PIN" required>
@@ -187,5 +218,6 @@
 
   <script type="module" src="/app.js"></script>
   <script type="module" src="/book.js"></script>
+  <script type="module" src="/call.js"></script>
 </body>
 </html>

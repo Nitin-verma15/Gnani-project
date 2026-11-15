@@ -148,7 +148,7 @@ function toast(message) {
   toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
 }
 
-const refreshBook = () => dispatchEvent(new CustomEvent("countr:refresh"));
+const refreshBook = () => dispatchEvent(new CustomEvent("counterbook:refresh"));
 
 function addAction({ id, summary, undone_at: undoneAt }) {
   els.welcome.hidden = true;
@@ -193,7 +193,7 @@ function setStatus(message) {
   els.mic.setAttribute("aria-label", listening || speaking ? COPY.micStop : COPY.micLabel);
   els.wave.classList.toggle("is-live", listening || speaking);
   // The 3D ledger, if it's running, listens for these. The assistant doesn't depend on them.
-  dispatchEvent(new CustomEvent("countr:voice", { detail: { active: listening || speaking } }));
+  dispatchEvent(new CustomEvent("counterbook:voice", { detail: { active: listening || speaking } }));
 }
 
 function setBusy(value) {
@@ -248,7 +248,7 @@ async function send(text, { spoken = false } = {}) {
         bubble = null; // text after an entry belongs below its card
         streamed = "";
         addAction(event.action);
-        dispatchEvent(new CustomEvent("countr:entry", { detail: { summary: romanize(event.action.summary) } }));
+        dispatchEvent(new CustomEvent("counterbook:entry", { detail: { summary: romanize(event.action.summary) } }));
       } else if (event.type === "undone") {
         const card = els.log.querySelector(`[data-action-id="${Number(event.id)}"]`);
         if (card) markUndone(card);
@@ -762,12 +762,12 @@ for (const btn of document.querySelectorAll("[data-try]")) {
 }
 
 // The shop book's "Try" buttons and anything else on the page can ask the assistant something.
-addEventListener("countr:say", (event) => {
+addEventListener("counterbook:say", (event) => {
   const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
   $("try").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
   send(event.detail.text);
 });
-addEventListener("countr:business", (event) => renderBusiness(event.detail));
+addEventListener("counterbook:business", (event) => renderBusiness(event.detail));
 
 // "/" jumps to the message box, like many chat apps.
 addEventListener("keydown", (event) => {
@@ -862,7 +862,7 @@ async function init() {
     }
     els.welcome.hidden = state.messages.length > 0;
     scrollDown();
-    dispatchEvent(new CustomEvent("countr:ready", { detail: { business: state.business, pin: state.pin, auth: authMode } }));
+    dispatchEvent(new CustomEvent("counterbook:ready", { detail: { business: state.business, pin: state.pin, auth: authMode, call: state.call, voice: voiceEngine, account: state.account } }));
   } catch (err) {
     console.error(err);
     setStatus(COPY.offline);
