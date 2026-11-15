@@ -70,7 +70,7 @@ test("a Gemini tool round trip records the entry and returns the signature and i
   assert.match(first.url, /\/v1beta\/models\/gemini-3\.8-flash:generateContent$/);
   assert.equal(first.headers["x-goog-api-key"], "test-key");
   assert.doesNotMatch(first.url, /test-key/, "the key never goes in the URL");
-  assert.match(first.body.systemInstruction.parts[0].text, /You are Munshi/);
+  assert.match(first.body.systemInstruction.parts[0].text, /You are Countr/);
   assert.match(first.body.contents[0].parts[0].text, /<context>/);
   assert.equal(first.body.contents[0].parts[1].text, "Ramesh ko 500 udhaar");
 

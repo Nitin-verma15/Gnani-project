@@ -175,15 +175,15 @@ test("CSV export protects spreadsheets from formulas and keeps undone rows marke
 });
 
 test("daily backups are made once a day and only the newest are kept", () => {
-  const dir = mkdtempSync(join(tmpdir(), "munshi-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "countr-test-"));
   try {
     const db = openDb(":memory:");
-    for (let d = 1; d <= 16; d++) writeFileSync(join(dir, `munshi-2026-10-${String(d).padStart(2, "0")}.db`), "");
+    for (let d = 1; d <= 16; d++) writeFileSync(join(dir, `countr-2026-10-${String(d).padStart(2, "0")}.db`), "");
     assert.ok(dailyBackup(db, dir, { keep: 14, now: fixedNow() }));
     assert.equal(dailyBackup(db, dir, { keep: 14, now: fixedNow() }), null, "not twice in a day");
     const files = readdirSync(dir).sort();
     assert.equal(files.length, 14);
-    assert.equal(files.at(-1), "munshi-2026-11-10.db");
+    assert.equal(files.at(-1), "countr-2026-11-10.db");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -220,7 +220,7 @@ test("the shop book, bills, exports, backup and profile are served", async () =>
     assert.equal(state.messages.at(-1).links[0].kind, "bill", "links survive a reload");
 
     const csv = await fetch(`${base}/api/export/transactions.csv`);
-    assert.match(csv.headers.get("content-disposition"), /attachment; filename="munshi-transactions-/);
+    assert.match(csv.headers.get("content-disposition"), /attachment; filename="countr-transactions-/);
     assert.match(await csv.text(), /Ramesh/);
     assert.equal((await fetch(`${base}/api/export/secrets.csv`)).status, 404);
 
@@ -295,7 +295,7 @@ test("links from tools reach the page and are saved with the reply", async () =>
 });
 
 test("an existing database from the first version gains the new columns", () => {
-  const dir = mkdtempSync(join(tmpdir(), "munshi-migrate-"));
+  const dir = mkdtempSync(join(tmpdir(), "countr-migrate-"));
   try {
     const path = join(dir, "old.db");
     const old = openDb(path);

@@ -64,7 +64,7 @@ function requireText(value, label) {
   return text;
 }
 
-/** WhatsApp "click to chat" link. The owner sends it from their own phone; nothing is sent by Munshi. */
+/** WhatsApp "click to chat" link. The owner sends it from their own phone; nothing is sent by Countr. */
 export function whatsappLink(phone, text) {
   let digits = String(phone ?? "").replace(/\D/g, "");
   if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);

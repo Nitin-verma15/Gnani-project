@@ -1,5 +1,5 @@
 // The shop book: a live view of the ledger beside the assistant. It refreshes whenever
-// the assistant writes something (app.js fires "munshi:refresh"). Nothing here is
+// the assistant writes something (app.js fires "countr:refresh"). Nothing here is
 // needed for the assistant itself to work.
 import { romanize } from "/romanize.js";
 
@@ -21,7 +21,7 @@ function el(tag, props = {}, ...children) {
   return node;
 }
 
-// Only links Munshi itself makes are ever turned into clickable addresses.
+// Only links Countr itself makes are ever turned into clickable addresses.
 export const safeUrl = (url) => (typeof url === "string" && /^(\/bill\/\d+|https:\/\/wa\.me\/\d*\?text=|upi:\/\/pay\?)/.test(url) ? url : null);
 
 function empty(title, hint) {
@@ -29,7 +29,7 @@ function empty(title, hint) {
 }
 
 function tryButton(text) {
-  return el("button", { type: "button", className: "try-chip", onclick: () => dispatchEvent(new CustomEvent("munshi:say", { detail: { text } })) }, `Try: "${text}"`);
+  return el("button", { type: "button", className: "try-chip", onclick: () => dispatchEvent(new CustomEvent("countr:say", { detail: { text } })) }, `Try: "${text}"`);
 }
 
 /* ---------- Week chart ---------- */
@@ -127,7 +127,7 @@ function renderStock(stock) {
   $("count-stock").textContent = low ? `${low} low` : "";
   $("count-stock").classList.toggle("count-warn", low > 0);
   if (!stock.length) {
-    return $("panel-stock").replaceChildren(empty("No stock items yet.", "Tell Munshi what you sell and how many you have."), tryButton("Sugar add karo, 50 kg hai, 45 rupaye kilo"));
+    return $("panel-stock").replaceChildren(empty("No stock items yet.", "Tell Countr what you sell and how many you have."), tryButton("Sugar add karo, 50 kg hai, 45 rupaye kilo"));
   }
   const sorted = [...stock].sort((a, b) => Number(b.low) - Number(a.low) || a.name.localeCompare(b.name));
   $("panel-stock").replaceChildren(el("ul", { className: "rows" }, ...sorted.map((i) => {
@@ -197,7 +197,7 @@ function setUpTabs() {
     if (focus) tab.focus();
     const strip = tab.parentElement;
     strip.scrollTo({ left: tab.offsetLeft - strip.clientWidth / 2 + tab.offsetWidth / 2 });
-    try { sessionStorage.setItem("munshi-tab", tab.id); } catch { /* fine */ }
+    try { sessionStorage.setItem("countr-tab", tab.id); } catch { /* fine */ }
   };
   tabs.forEach((tab, i) => {
     tab.addEventListener("click", () => select(tab));
@@ -209,7 +209,7 @@ function setUpTabs() {
     });
   });
   let saved = null;
-  try { saved = sessionStorage.getItem("munshi-tab"); } catch { /* fine */ }
+  try { saved = sessionStorage.getItem("countr-tab"); } catch { /* fine */ }
   const start = tabs.find((t) => t.id === saved);
   if (start) select(start);
 }
@@ -237,7 +237,7 @@ function setUpProfileForm() {
       if (!res.ok) throw new Error(out.error);
       fillProfile(out.business);
       status.textContent = out.action ? "Saved." : "Nothing changed.";
-      dispatchEvent(new CustomEvent("munshi:business", { detail: out.business }));
+      dispatchEvent(new CustomEvent("countr:business", { detail: out.business }));
     } catch (err) {
       status.textContent = err.message || "Couldn't save. Please try again.";
       status.className = "form-status form-error";
@@ -278,13 +278,13 @@ async function refresh() {
 setUpTabs();
 setUpChartHover();
 setUpProfileForm();
-addEventListener("munshi:refresh", refresh);
-addEventListener("munshi:ready", (e) => {
+addEventListener("countr:refresh", refresh);
+addEventListener("countr:ready", (e) => {
   fillProfile(e.detail.business);
   const accounts = e.detail.auth === "accounts";
   $("lock").hidden = !e.detail.pin && !accounts;
-  $("lock").textContent = accounts ? "Sign out" : "Lock Munshi";
+  $("lock").textContent = accounts ? "Sign out" : "Lock Countr";
   refresh();
 });
 
-addEventListener("munshi:business", (e) => fillProfile(e.detail));
+addEventListener("countr:business", (e) => fillProfile(e.detail));

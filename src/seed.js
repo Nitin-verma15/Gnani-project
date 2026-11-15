@@ -1,5 +1,6 @@
 // Made-up kirana store data for trying the app. The "Try the demo shop" button fills its
 // shop with this automatically; `npm run seed` does the same from the command line.
+import "./env.js";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDb } from "./db.js";
@@ -58,10 +59,10 @@ export function seedSample(db) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-  const dataDir = process.env.MUNSHI_DATA_DIR || join(root, "data");
+  const dataDir = process.env.COUNTR_DATA_DIR || join(root, "data");
   // With shop accounts (the default) this fills the demo shop; in single-shop mode, the one shop.
-  const path = process.env.MUNSHI_DB
-    || (process.env.MUNSHI_SINGLE_SHOP === "1" ? join(dataDir, "munshi.db") : join(dataDir, "shops", "demo.db"));
+  const path = process.env.COUNTR_DB
+    || (process.env.COUNTR_SINGLE_SHOP === "1" ? join(dataDir, "countr.db") : join(dataDir, "shops", "demo.db"));
   const added = seedSample(openDb(path));
   console.log(added ? `Added sample data for Sharma Kirana Store (all made up) to ${path}.` : "This database already has entries, so nothing was added.");
 }
