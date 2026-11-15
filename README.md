@@ -37,6 +37,8 @@ The repository includes a [Render](https://render.com) blueprint, [render.yaml](
 2. When asked, paste `GEMINI_API_KEY` (and `GNANI_API_KEY` for voice). They're stored by Render, never in the repository.
 3. Deploy. The site gets an `https://…onrender.com` address, and phones can use the microphone because it's HTTPS.
 
+**Vercel front (optional).** [vercel.json](vercel.json) serves the pages from `public/` on Vercel and passes `/api/*` and `/bill/*` through to the Render service, so the site has one address and the sign-in cookie still works. Import the repository on Vercel with no settings to change; if the Render address changes, update it in `vercel.json`.
+
 The blueprint uses Render's free plan. The free plan has no disk, so every restart or redeploy wipes registered shops (the demo shop is always rebuilt with sample data); that's fine for a demo, not for real shops. For real shops, switch to the Starter plan and attach a 1 GB disk at `/var/data` with `COUNTR_DATA_DIR=/var/data`, as the comment in `render.yaml` shows. A free service also sleeps after 15 minutes idle, so the first visit after that takes about a minute. The server listens on `0.0.0.0` there (`COUNTR_HOST`), answers health checks at `/healthz`, and marks its sign-in cookie `Secure` when served over HTTPS.
 
 ## Shop accounts

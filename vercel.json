@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://countr-qb4l.onrender.com/api/:path*" },
+    { "source": "/bill/:path*", "destination": "https://countr-qb4l.onrender.com/bill/:path*" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/signup", "destination": "/login.html" },
+    { "source": "/app", "destination": "/app.html" }
+  ],
+  "headers": [
+    { "source": "/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+  ]
+}
