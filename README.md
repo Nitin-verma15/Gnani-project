@@ -1,5 +1,7 @@
 # Countr
 
+**Live:** https://countr-qb4l.onrender.com · **One-page pitch:** [PITCH.md](PITCH.md)
+
 A voice-first AI assistant for small business owners in India. The owner talks or types in English, Hindi or Hinglish, and the assistant keeps the books: customers, sales, expenses, udhaar, stock, orders and appointments. It answers questions from the real numbers, prints bills with GST, and drafts WhatsApp payment reminders with the shop's UPI ID.
 
 Beside the assistant, the **shop book** shows the last 7 days, who owes what (with a Remind button), stock levels, every entry with its bill, open orders and bookings, and the shop's details and data downloads.
