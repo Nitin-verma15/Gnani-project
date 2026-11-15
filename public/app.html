@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0b0c">
-  <meta name="description" content="Munshi is a voice-first AI munshi for small businesses in India. Say what happened at the counter, in English, Hindi or Hinglish, and it keeps the books.">
-  <title>Your shop · Munshi</title>
+  <meta name="description" content="Countr is a voice-first AI ledger for small businesses in India. Say what happened at the counter, in English, Hindi or Hinglish, and it keeps the books.">
+  <title>Your shop · Countr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Caveat:wght@500;700&display=swap">
@@ -17,9 +17,9 @@
 
   <header class="app-top">
     <div class="app-top-inner">
-      <a class="logo" href="/" aria-label="Munshi home">
+      <a class="logo" href="/" aria-label="Countr home">
         <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span>Munshi</span>
+        <span>Countr</span>
       </a>
       <div class="app-shop">
         <span class="app-shop-name" id="app-shop-name"></span>
@@ -141,7 +141,7 @@
           <div class="panel" role="tabpanel" id="panel-settings" aria-labelledby="tab-settings" tabindex="0" hidden>
             <form class="profile-form" id="profile-form">
               <h3>Shop details</h3>
-              <p class="hint">These appear on bills and payment reminders. You can also just tell Munshi.</p>
+              <p class="hint">These appear on bills and payment reminders. You can also just tell Countr.</p>
               <div class="fields">
                 <label>Shop name<input name="name" autocomplete="organization" maxlength="200"></label>
                 <label>Type of business<input name="type" placeholder="kirana store, salon…" maxlength="200"></label>
@@ -165,7 +165,7 @@
                 <a class="btn btn-line btn-sm" href="/api/export/stock.csv" download>Stock (CSV)</a>
                 <a class="btn btn-line btn-sm" href="/api/backup" download>Full backup</a>
               </div>
-              <button type="button" class="btn btn-line btn-sm" id="lock" hidden>Lock Munshi</button>
+              <button type="button" class="btn btn-line btn-sm" id="lock" hidden>Lock Countr</button>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@
 
   <div class="lock-screen" id="lock-screen" hidden>
     <form class="lock-card" id="lock-form" aria-labelledby="lock-title">
-      <span class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Munshi</span>
+      <span class="logo"><span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Countr</span>
       <h2 id="lock-title">Enter your PIN</h2>
       <p>Your books are locked.</p>
       <input id="lock-pin" type="password" inputmode="numeric" autocomplete="current-password" aria-label="PIN" required>

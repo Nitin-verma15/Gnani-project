@@ -156,7 +156,7 @@ function drawLeftPage(ctx, paper) {
   ctx.textAlign = "left";
   ctx.fillStyle = INK;
   ctx.font = `400 170px ${SERIF}`;
-  ctx.fillText("Munshi", 128, 410);
+  ctx.fillText("Countr", 128, 410);
   ctx.fillStyle = INK_RED;
   ctx.font = `italic 400 60px ${SERIF}`;
   ctx.fillText("the ledger that listens", 134, 488);
@@ -296,7 +296,7 @@ function drawCover() {
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.font = `400 190px ${SERIF}`;
-    ctx.fillText("Munshi", W / 2, 760);
+    ctx.fillText("Countr", W / 2, 760);
     ctx.font = `500 34px ${MONO}`;
     ctx.fillText("H I S A A B   ·   K I T A A B", W / 2, 850);
     [[-36, 30], [-12, 70], [12, 46], [36, 22]].forEach(([dx, h]) => ctx.fillRect(W / 2 + dx - 6, 540 - h, 12, h * 2));
@@ -978,7 +978,7 @@ export function startScene(canvas, { progress: readProgress, chapters = [0, 0.26
     dust.rotation.y = time * 0.015;
   }
 
-  addEventListener("munshi:entry", (event) => {
+  addEventListener("countr:entry", (event) => {
     // Real entries from the assistant appear on the page under the story's example.
     liveRows = [event.detail.summary, ...liveRows].slice(0, 8);
     drawRight(lastWrite < 0 ? 0 : lastWrite);

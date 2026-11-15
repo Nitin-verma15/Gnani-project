@@ -1,25 +1,26 @@
 # Render blueprint: https://render.com/docs/blueprint-spec
 # New > Blueprint, pick this repository, then fill in the secret keys when asked.
+#
+# This runs on Render's free plan. The free plan has no persistent disk, so registered
+# shops are lost when the service restarts or redeploys (the demo shop is always rebuilt).
+# To keep shops for good: change plan to starter and add the disk below.
+#   plan: starter
+#   envVars: COUNTR_DATA_DIR = /var/data
+#   disk: { name: countr-data, mountPath: /var/data, sizeGB: 1 }
 services:
   - type: web
-    name: munshi
+    name: countr
     runtime: node
-    plan: starter            # needed for the disk below; see the README for the free-plan caveat
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
         value: "24"
-      - key: MUNSHI_HOST
+      - key: COUNTR_HOST
         value: 0.0.0.0        # accept the hosting provider's traffic; shops still sign in
-      - key: MUNSHI_DATA_DIR
-        value: /var/data      # accounts and every shop's books, on the persistent disk
       - key: GEMINI_API_KEY
         sync: false           # Render asks for the value; it never goes in the repository
       - key: GNANI_API_KEY
         sync: false
-    disk:
-      name: munshi-data
-      mountPath: /var/data
-      sizeGB: 1
