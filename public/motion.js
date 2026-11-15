@@ -115,12 +115,13 @@ function setUpAccount() {
   fetch("/api/state").then((r) => r.json()).then((state) => {
     if (state.auth === "accounts" && !state.signedIn) return;
     const area = document.getElementById("nav-account");
+    const langSwitch = area?.querySelector(".lang-switch"); // keep the language switch
     const open = Object.assign(document.createElement("a"), { className: "btn btn-gold btn-sm", href: "/app", textContent: "Open your shop" });
     if (state.account?.shop_name) {
       const name = Object.assign(document.createElement("span"), { className: "account-name", textContent: state.account.shop_name });
-      area?.replaceChildren(name, open);
+      area?.replaceChildren(...[langSwitch, name, open].filter(Boolean));
     } else {
-      area?.replaceChildren(open);
+      area?.replaceChildren(...[langSwitch, open].filter(Boolean));
     }
   }).catch(() => {});
 }

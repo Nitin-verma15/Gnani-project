@@ -2,6 +2,7 @@
 // the assistant writes something (app.js fires "countr:refresh"). Nothing here is
 // needed for the assistant itself to work.
 import { romanize } from "/romanize.js";
+import { pick, onLang } from "/lang.js";
 
 const $ = (id) => document.getElementById(id);
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2, minimumFractionDigits: 0 });
@@ -104,7 +105,7 @@ function setUpChartHover() {
 function renderUdhaar(pending) {
   $("count-udhaar").textContent = pending.length ? String(pending.length) : "";
   if (!pending.length) {
-    return $("panel-udhaar").replaceChildren(empty("Nobody owes you anything.", "Credit sales show up here, biggest first."), tryButton("Ramesh ko 500 udhaar diya"));
+    return $("panel-udhaar").replaceChildren(empty("Nobody owes you anything.", "Credit sales show up here, biggest first."), tryButton(pick("Ramesh ko 500 udhaar diya", "Gave Ramesh 500 on credit")));
   }
   const total = pending.reduce((sum, p) => sum + p.owes, 0);
   $("panel-udhaar").replaceChildren(
@@ -127,7 +128,7 @@ function renderStock(stock) {
   $("count-stock").textContent = low ? `${low} low` : "";
   $("count-stock").classList.toggle("count-warn", low > 0);
   if (!stock.length) {
-    return $("panel-stock").replaceChildren(empty("No stock items yet.", "Tell Countr what you sell and how many you have."), tryButton("Sugar add karo, 50 kg hai, 45 rupaye kilo"));
+    return $("panel-stock").replaceChildren(empty("No stock items yet.", "Tell Countr what you sell and how many you have."), tryButton(pick("Sugar add karo, 50 kg hai, 45 rupaye kilo", "Add sugar to stock, 50 kg at 45 rupees a kilo")));
   }
   const sorted = [...stock].sort((a, b) => Number(b.low) - Number(a.low) || a.name.localeCompare(b.name));
   $("panel-stock").replaceChildren(el("ul", { className: "rows" }, ...sorted.map((i) => {
@@ -146,14 +147,14 @@ const KIND_LABEL = { sale: "Sale", expense: "Spent", payment: "Received" };
 
 function renderEntries(recent) {
   if (!recent.length) {
-    return $("panel-entries").replaceChildren(empty("No entries yet.", "Sales, expenses and payments appear here as you speak them."), tryButton("1000 ki sale"));
+    return $("panel-entries").replaceChildren(empty("No entries yet.", "Sales, expenses and payments appear here as you speak them."), tryButton(pick("1000 ki sale", "Sold for 1000")));
   }
   $("panel-entries").replaceChildren(el("ul", { className: "rows" }, ...recent.map((t) => el("li", { className: "row" },
     el("span", { className: `kind kind-${t.kind}` }, KIND_LABEL[t.kind]),
     el("span", { className: "row-main" },
       el("span", { className: "row-title" }, romanize(t.customer || t.description || t.category || KIND_LABEL[t.kind])),
       el("span", { className: "row-sub" }, shortDate(t.date),
-        t.on_udhaar ? ` · ${inr.format(t.on_udhaar)} on udhaar` : "",
+        t.on_udhaar ? ` · ${inr.format(t.on_udhaar)} ${pick("on udhaar", "on credit")}` : "",
         t.gst_rate ? ` · GST ${t.gst_rate}%` : "",
         t.category && t.kind === "expense" ? ` · ${t.category}` : "",
         t.method ? ` · ${t.method.toUpperCase()}` : "")),
@@ -279,6 +280,7 @@ setUpTabs();
 setUpChartHover();
 setUpProfileForm();
 addEventListener("countr:refresh", refresh);
+onLang(refresh);
 addEventListener("countr:ready", (e) => {
   fillProfile(e.detail.business);
   const accounts = e.detail.auth === "accounts";

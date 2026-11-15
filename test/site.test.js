@@ -68,7 +68,7 @@ test("the scroll story has one chapter per progress label, in order", () => {
   const html = read("index.html");
   const chapters = [...html.matchAll(/data-chapter="(\d)"/g)].map((m) => Number(m[1]));
   assert.deepEqual(chapters, [0, 1, 2, 3, 4]);
-  const rail = html.match(/<ol class="story-rail"[^>]*>([\s\S]*?)<\/ol>/)[1].match(/<li>/g);
+  const rail = html.match(/<ol class="story-rail"[^>]*>([\s\S]*?)<\/ol>/)[1].match(/<li[\s>]/g);
   assert.equal(rail.length, chapters.length);
   assert.match(read("motion.js"), /CHAPTERS = \[0, [\d., ]+\]/);
 });
@@ -80,4 +80,14 @@ test("every photo has alt text and credits its photographer", () => {
     assert.match(card, /<img src="https:\/\/images\.pexels\.com\/photos\/(\d+)\/pexels-photo-\1\.jpeg[^"]+" srcset="[^"]+" sizes="[^"]+" alt="[^"]{10,}"/);
     assert.match(card, /class="credit" href="https:\/\/www\.pexels\.com\/photo\/[\w-]+-\d+\/"[^>]*>Photo: [^<]+ \/ Pexels</);
   }
+});
+
+test("the language switch: every English version is filled in, and each page has the switch", () => {
+  for (const page of Object.keys(PAGES)) {
+    const html = read(page);
+    assert.match(html, /data-lang-choice="english"/, `${page} has the language switch`);
+    for (const [, english] of html.matchAll(/data-en="([^"]*)"/g)) assert.ok(english.trim(), `${page} has an empty English version`);
+  }
+  assert.ok(read("index.html").includes('src="/lang.js"') && read("login.html").includes('src="/lang.js"'));
+  assert.match(read("app.js"), /from "\/lang\.js"/);
 });
