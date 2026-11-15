@@ -28,6 +28,7 @@
         <a href="#tech">Technology</a>
       </nav>
       <div class="nav-account" id="nav-account">
+        <div class="lang-switch" role="group" aria-label="Website language"><button type="button" data-lang-choice="hinglish" aria-pressed="true">Hinglish</button><button type="button" data-lang-choice="english" aria-pressed="false">English</button></div>
         <a class="btn btn-ghost btn-sm nav-signin" href="/login">Sign in</a>
         <a class="btn btn-gold btn-sm" href="/signup">Get started</a>
       </div>
@@ -45,10 +46,10 @@
           <div class="chapter chapter-hero" data-chapter="0">
             <p class="kicker"><span class="kicker-dot" aria-hidden="true"></span>AI bookkeeping for India's small shops</p>
             <h1 class="hero-title">
-              <span class="line"><span>Dukaan ka hisaab,</span></span>
-              <span class="line"><em>bas bolkar.</em></span>
+              <span class="line"><span data-en="Your shop's accounts,">Dukaan ka hisaab,</span></span>
+              <span class="line" data-en="&lt;em&gt;just by speaking.&lt;/em&gt;"><em>bas bolkar.</em></span>
             </h1>
-            <p class="hero-lede">Say what happened at the counter, in English, Hindi or Hinglish. Countr writes the ledger, keeps every rupee of udhaar, and answers when you ask how business is going.</p>
+            <p class="hero-lede" data-en="Say what happened at the counter, in English, Hindi or Hinglish. Countr writes the ledger, keeps every rupee of credit, and answers when you ask how business is going.">Say what happened at the counter, in English, Hindi or Hinglish. Countr writes the ledger, keeps every rupee of udhaar, and answers when you ask how business is going.</p>
             <div class="actions">
               <a class="btn btn-gold" href="/signup">Create your shop</a>
               <a class="btn btn-ghost" href="#start">Try the demo shop</a>
@@ -56,33 +57,33 @@
           </div>
 
           <article class="chapter" data-chapter="1">
-            <p class="step"><span>01</span>Bolo</p>
+            <p class="step" data-en="&lt;span&gt;01&lt;/span&gt;Speak"><span>01</span>Bolo</p>
             <h2>Say it the way you'd tell your helper.</h2>
-            <p>Mix Hindi and English freely. Names, amounts in words, "kal", "baad mein dega": Countr understands the counter's language.</p>
+            <p data-en="Mix Hindi and English freely. Names, amounts in words, &quot;tomorrow&quot;, &quot;will pay later&quot;: Countr understands the counter's language.">Mix Hindi and English freely. Names, amounts in words, "kal", "baad mein dega": Countr understands the counter's language.</p>
           </article>
 
           <article class="chapter" data-chapter="2">
-            <p class="step"><span>02</span>Likh diya</p>
+            <p class="step" data-en="&lt;span&gt;02&lt;/span&gt;Written"><span>02</span>Likh diya</p>
             <h2>Written into the ledger, exact to the paisa.</h2>
             <p>Every entry is saved the moment you say it and read back to you. Misheard? One tap undoes it. If a name could be two people, it asks.</p>
           </article>
 
           <article class="chapter" data-chapter="3">
-            <p class="step"><span>03</span>Hisaab</p>
+            <p class="step" data-en="&lt;span&gt;03&lt;/span&gt;Accounts"><span>03</span>Hisaab</p>
             <h2>Ask how business is going. Get a straight answer.</h2>
-            <p>"Is hafte kaisa raha?" Sales, spending and who owes what, compared with last week, worked out by the ledger and never guessed.</p>
+            <p data-en="&quot;How was this week?&quot; Sales, spending and who owes what, compared with last week, worked out by the ledger and never guessed.">"Is hafte kaisa raha?" Sales, spending and who owes what, compared with last week, worked out by the ledger and never guessed.</p>
           </article>
 
           <article class="chapter" data-chapter="4">
-            <p class="step"><span>04</span>Yaad</p>
-            <h2>No udhaar slips through again.</h2>
+            <p class="step" data-en="&lt;span&gt;04&lt;/span&gt;Remembered"><span>04</span>Yaad</p>
+            <h2 data-en="No credit slips through again.">No udhaar slips through again.</h2>
             <p>Countr keeps every balance, warns when stock runs low, prints bills with GST, and drafts a polite WhatsApp reminder with your UPI ID.</p>
             <a class="btn btn-gold" href="#start">Get started</a>
           </article>
         </div>
 
         <ol class="story-rail" aria-hidden="true">
-          <li>Start</li><li>Bolo</li><li>Likh diya</li><li>Hisaab</li><li>Yaad</li>
+          <li>Start</li><li data-en="Speak">Bolo</li><li data-en="Written">Likh diya</li><li data-en="Accounts">Hisaab</li><li data-en="Remembered">Yaad</li>
         </ol>
         <p class="scroll-hint" aria-hidden="true"><span></span>Scroll</p>
       </div>
@@ -93,13 +94,13 @@
       <div class="wrap start-grid">
         <div class="start-copy">
           <p class="label" data-reveal>Get started</p>
-          <h2 class="display" data-reveal>Bolo. Dekho.<br><em>Ho gaya.</em></h2>
+          <h2 class="display" data-reveal data-en="Say it. See it.&lt;br&gt;&lt;em&gt;Done.&lt;/em&gt;">Bolo. Dekho.<br><em>Ho gaya.</em></h2>
           <p class="body-lg" data-reveal>Register your shop in a minute and start keeping the books by talking. Or open the demo shop and try it right now, no account needed.</p>
           <ul class="prompts prompts-static" data-reveal aria-label="Things you can say">
-            <li><span class="prompt-kind">Udhaar</span>"Ramesh ko 500 udhaar diya"</li>
-            <li><span class="prompt-kind">Payment</span>"Ramesh ne 200 diye"</li>
-            <li><span class="prompt-kind">Stock</span>"2 packet dal aur 1 tel becha"</li>
-            <li><span class="prompt-kind">Summary</span>"Is hafte business kaisa raha?"</li>
+            <li data-en="&lt;span class=&quot;prompt-kind&quot;&gt;Credit&lt;/span&gt;&quot;Gave Ramesh 500 on credit&quot;"><span class="prompt-kind">Udhaar</span>"Ramesh ko 500 udhaar diya"</li>
+            <li data-en="&lt;span class=&quot;prompt-kind&quot;&gt;Payment&lt;/span&gt;&quot;Ramesh paid 200&quot;"><span class="prompt-kind">Payment</span>"Ramesh ne 200 diye"</li>
+            <li data-en="&lt;span class=&quot;prompt-kind&quot;&gt;Stock&lt;/span&gt;&quot;Sold 2 packets of dal and 1 oil&quot;"><span class="prompt-kind">Stock</span>"2 packet dal aur 1 tel becha"</li>
+            <li data-en="&lt;span class=&quot;prompt-kind&quot;&gt;Summary&lt;/span&gt;&quot;How was business this week?&quot;"><span class="prompt-kind">Summary</span>"Is hafte business kaisa raha?"</li>
           </ul>
         </div>
         <div class="start-cards">
@@ -117,7 +118,7 @@
           <button type="button" class="start-card" id="landing-demo" data-reveal>
             <span class="start-kicker">No account needed</span>
             <span class="start-title">Try the demo shop</span>
-            <span class="start-text">A sample kirana store with customers, udhaar and stock already in it.</span>
+            <span class="start-text" data-en="A sample kirana store with customers, credit and stock already in it.">A sample kirana store with customers, udhaar and stock already in it.</span>
             <span class="start-go">Open demo →</span>
           </button>
         </div>
@@ -137,12 +138,12 @@
           <p class="body-lg muted" data-reveal>Everything a small business keeps in its head and its registers, kept for you, and never more than a sentence away.</p>
         </div>
         <ol class="features">
-          <li data-reveal><span class="f-num">01</span><h3>Udhaar that never gets lost</h3><p>Every credit sale and repayment, with balances worked out from the ledger, so they can't drift.</p><p class="f-say">"Kaun kitna baaki hai?"</p></li>
-          <li data-reveal><span class="f-num">02</span><h3>Answers, not charts</h3><p>Sales, spending and top customers, compared with the last period, spoken in plain words.</p><p class="f-say">"Is hafte business kaisa raha?"</p></li>
-          <li data-reveal><span class="f-num">03</span><h3>Stock that counts itself</h3><p>Sales take items off the shelf, deliveries put them back, and it tells you what's running low.</p><p class="f-say">"Dal kitni bachi hai?"</p></li>
-          <li data-reveal><span class="f-num">04</span><h3>Bills, GST and UPI</h3><p>Every sale gets a printable bill, with CGST and SGST worked out and your UPI ID for payment.</p><p class="f-say">"Pichli sale ka bill dikhao"</p></li>
-          <li data-reveal><span class="f-num">05</span><h3>Reminders on WhatsApp</h3><p>A polite message, drafted for you. One tap sends it from your own phone. Nothing goes out on its own.</p><p class="f-say">"Ramesh ko reminder bhejo"</p></li>
-          <li data-reveal><span class="f-num">06</span><h3>Safe with your money</h3><p>Two customers called Ramesh? It asks which one. Future dates are refused. Every entry can be undone.</p><p class="f-say">"Galat ho gaya, hata do"</p></li>
+          <li data-reveal><span class="f-num">01</span><h3 data-en="Credit that never gets lost">Udhaar that never gets lost</h3><p>Every credit sale and repayment, with balances worked out from the ledger, so they can't drift.</p><p class="f-say" data-en="&quot;Who owes how much?&quot;">"Kaun kitna baaki hai?"</p></li>
+          <li data-reveal><span class="f-num">02</span><h3>Answers, not charts</h3><p>Sales, spending and top customers, compared with the last period, spoken in plain words.</p><p class="f-say" data-en="&quot;How was business this week?&quot;">"Is hafte business kaisa raha?"</p></li>
+          <li data-reveal><span class="f-num">03</span><h3>Stock that counts itself</h3><p>Sales take items off the shelf, deliveries put them back, and it tells you what's running low.</p><p class="f-say" data-en="&quot;How much dal is left?&quot;">"Dal kitni bachi hai?"</p></li>
+          <li data-reveal><span class="f-num">04</span><h3>Bills, GST and UPI</h3><p>Every sale gets a printable bill, with CGST and SGST worked out and your UPI ID for payment.</p><p class="f-say" data-en="&quot;Show the bill for the last sale&quot;">"Pichli sale ka bill dikhao"</p></li>
+          <li data-reveal><span class="f-num">05</span><h3>Reminders on WhatsApp</h3><p>A polite message, drafted for you. One tap sends it from your own phone. Nothing goes out on its own.</p><p class="f-say" data-en="&quot;Send Ramesh a reminder&quot;">"Ramesh ko reminder bhejo"</p></li>
+          <li data-reveal><span class="f-num">06</span><h3>Safe with your money</h3><p>Two customers called Ramesh? It asks which one. Future dates are refused. Every entry can be undone.</p><p class="f-say" data-en="&quot;That was wrong, remove it&quot;">"Galat ho gaya, hata do"</p></li>
         </ol>
       </div>
     </section>
@@ -161,7 +162,7 @@
             <img src="https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/17870116/pexels-photo-17870116.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, 60vw" alt="A colourful stall of spices and dry goods at a New Delhi market" loading="lazy">
             <div class="photo-text">
               <h3>Kirana and daily needs</h3>
-              <p class="photo-say">"Sharma ji ko 1,200 ka saaman udhaar"</p>
+              <p class="photo-say" data-en="&quot;Sharma ji took 1,200 of goods on credit&quot;">"Sharma ji ko 1,200 ka saaman udhaar"</p>
               <a class="credit" href="https://www.pexels.com/photo/selection-of-spices-at-bazaar-17870116/" target="_blank" rel="noopener">Photo: Patricia Luquet / Pexels</a>
             </div>
           </li>
@@ -169,7 +170,7 @@
             <img src="https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/1654834/pexels-photo-1654834.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, 40vw" alt="A hairstylist attending to a client in an elegant salon with mirrors and wooden decor" loading="lazy">
             <div class="photo-text">
               <h3>Salons and parlours</h3>
-              <p class="photo-say">"Kal 11 baje Priya ka facial book karo"</p>
+              <p class="photo-say" data-en="&quot;Book Priya's facial for 11 tomorrow&quot;">"Kal 11 baje Priya ka facial book karo"</p>
               <a class="credit" href="https://www.pexels.com/photo/woman-standing-in-front-of-woman-sitting-on-chair-inside-room-1654834/" target="_blank" rel="noopener">Photo: Asad Photo Maldives / Pexels</a>
             </div>
           </li>
@@ -177,7 +178,7 @@
             <img src="https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/8886949/pexels-photo-8886949.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 25vw" alt="A boutique displaying colourful traditional Indian clothing" loading="lazy">
             <div class="photo-text">
               <h3>Boutiques</h3>
-              <p class="photo-say">"Asha ka lehenga Friday tak ready karna hai"</p>
+              <p class="photo-say" data-en="&quot;Asha's lehenga must be ready by Friday&quot;">"Asha ka lehenga Friday tak ready karna hai"</p>
               <a class="credit" href="https://www.pexels.com/photo/traditional-clothes-on-market-8886949/" target="_blank" rel="noopener">Photo: Lara Jameson / Pexels</a>
             </div>
           </li>
@@ -185,7 +186,7 @@
             <img src="https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/5864553/pexels-photo-5864553.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 25vw" alt="A modern cafe counter with geometric patterns and shelves of cups" loading="lazy">
             <div class="photo-text">
               <h3>Restaurants and cafes</h3>
-              <p class="photo-say">"Aaj doodh pe 2,000 kharcha hua"</p>
+              <p class="photo-say" data-en="&quot;Spent 2,000 on milk today&quot;">"Aaj doodh pe 2,000 kharcha hua"</p>
               <a class="credit" href="https://www.pexels.com/photo/view-of-a-cafe-counter-5864553/" target="_blank" rel="noopener">Photo: Rachel Claire / Pexels</a>
             </div>
           </li>
@@ -193,7 +194,7 @@
             <img src="https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200" srcset="https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=800 800w, https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200 1200w, https://images.pexels.com/photos/8327581/pexels-photo-8327581.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1600 1600w" sizes="(max-width: 640px) 100vw, (max-width: 1000px) 50vw, 25vw" alt="A watchmaker repairing watches in an organised workshop" loading="lazy">
             <div class="photo-text">
               <h3>Repair shops</h3>
-              <p class="photo-say">"Imran ki ghadi ready hai, mark kar do"</p>
+              <p class="photo-say" data-en="&quot;Imran's watch is ready, mark it done&quot;">"Imran ki ghadi ready hai, mark kar do"</p>
               <a class="credit" href="https://www.pexels.com/photo/watchmaker-working-in-a-watch-repair-shop-8327581/" target="_blank" rel="noopener">Photo: Tima Miroshnichenko / Pexels</a>
             </div>
           </li>
@@ -226,7 +227,7 @@
         </ol>
         <div class="tech-grid">
           <div class="fact" data-reveal><h3>Figures come from tools</h3><p>Totals are calculated by the ledger and fetched through tools. The assistant never quotes numbers from memory.</p></div>
-          <div class="fact" data-reveal><h3>Balances are calculated</h3><p>Udhaar and stock are worked out from every entry each time, so they can't drift out of step.</p></div>
+          <div class="fact" data-reveal><h3>Balances are calculated</h3><p data-en="Credit and stock are worked out from every entry each time, so they can't drift out of step.">Udhaar and stock are worked out from every entry each time, so they can't drift out of step.</p></div>
           <div class="fact" data-reveal><h3>Refuses to guess</h3><p>Ambiguous names, future dates and payments from unknown customers come back as a question.</p></div>
           <div class="fact" data-reveal><h3>Your books stay yours</h3><p>One file on your computer, backed up daily, downloadable as CSV. A PIN can lock it.</p></div>
         </div>
@@ -249,6 +250,7 @@
   </footer>
 
 
+  <script type="module" src="/lang.js"></script>
   <script type="module" src="/motion.js"></script>
 </body>
 </html>

@@ -32,6 +32,7 @@ const PUBLIC_FILES = {
   "/audio.js": ["audio.js", "text/javascript; charset=utf-8"],
   "/motion.js": ["motion.js", "text/javascript; charset=utf-8"],
   "/scene.js": ["scene.js", "text/javascript; charset=utf-8"],
+  "/lang.js": ["lang.js", "text/javascript; charset=utf-8"],
   "/vendor/three.module.min.js": ["vendor/three.module.min.js", "text/javascript; charset=utf-8"],
   "/recorder-worklet.js": ["recorder-worklet.js", "text/javascript; charset=utf-8"],
   "/style.css": ["style.css", "text/css; charset=utf-8"],

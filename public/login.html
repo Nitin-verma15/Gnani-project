@@ -15,16 +15,19 @@
 <body class="auth-page">
   <main class="auth-layout">
     <aside class="auth-brand">
-      <a class="logo" href="/" aria-label="Countr home">
-        <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span>Countr</span>
-      </a>
+      <div class="auth-brand-top">
+        <a class="logo" href="/" aria-label="Countr home">
+          <span class="logo-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>Countr</span>
+        </a>
+        <div class="lang-switch" role="group" aria-label="Website language"><button type="button" data-lang-choice="hinglish" aria-pressed="true">Hinglish</button><button type="button" data-lang-choice="english" aria-pressed="false">English</button></div>
+      </div>
       <div class="auth-brand-copy">
         <p class="label">The ledger that listens</p>
-        <h1>Dukaan ka hisaab,<br><em>bas bolkar.</em></h1>
+        <h1 data-en="Your shop's accounts,&lt;br&gt;&lt;em&gt;just by speaking.&lt;/em&gt;">Dukaan ka hisaab,<br><em>bas bolkar.</em></h1>
         <ul class="auth-points">
           <li><span>01</span>Speak in English, Hindi or Hinglish. Every entry is read back, with one-tap undo.</li>
-          <li><span>02</span>Udhaar, stock, bills with GST and WhatsApp reminders, all in one place.</li>
+          <li data-en="&lt;span&gt;02&lt;/span&gt;Credit, stock, bills with GST and WhatsApp reminders, all in one place."><span>02</span>Udhaar, stock, bills with GST and WhatsApp reminders, all in one place.</li>
           <li><span>03</span>Your shop's books are kept separately from every other shop.</li>
         </ul>
       </div>
@@ -68,6 +71,7 @@
     </section>
   </main>
 
+  <script type="module" src="/lang.js"></script>
   <script type="module" src="/login.js"></script>
 </body>
 </html>

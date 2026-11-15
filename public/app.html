@@ -26,6 +26,7 @@
         <span class="app-shop-meta" id="app-shop-meta"></span>
       </div>
       <nav class="app-actions" aria-label="Account">
+        <div class="lang-switch" role="group" aria-label="Website language"><button type="button" data-lang-choice="hinglish" aria-pressed="true">Hinglish</button><button type="button" data-lang-choice="english" aria-pressed="false">English</button></div>
         <a class="btn btn-ghost btn-sm" href="/">Website</a>
         <button type="button" class="btn btn-line btn-sm" id="app-signout" hidden>Sign out</button>
       </nav>
@@ -54,7 +55,7 @@
         <div class="glance" aria-label="Today at a glance">
           <div class="tile"><span class="tile-label">Sales today</span><span class="tile-value" id="glance-sales">–</span></div>
           <div class="tile"><span class="tile-label">Spent today</span><span class="tile-value" id="glance-expenses">–</span></div>
-          <div class="tile tile-due"><span class="tile-label">Udhaar due</span><span class="tile-value" id="glance-outstanding">–</span></div>
+          <div class="tile tile-due"><span class="tile-label" data-en="Credit due">Udhaar due</span><span class="tile-value" id="glance-outstanding">–</span></div>
         </div>
         <p class="glance-extra" id="glance-extra" hidden></p>
         <p class="toast" id="toast" role="status" hidden></p>
@@ -62,7 +63,7 @@
 
         <div class="log" id="log" aria-live="polite">
           <div class="welcome" id="welcome" hidden>
-            <p class="welcome-title">Namaste. What happened in the shop today?</p>
+            <p class="welcome-title" data-en="Hello. What happened in the shop today?">Namaste. What happened in the shop today?</p>
             <div class="chips" id="chips"></div>
           </div>
         </div>
@@ -110,7 +111,7 @@
           <dl class="week-stats">
             <div><dt>Sales</dt><dd id="week-sales">–</dd></div>
             <div><dt>Spent</dt><dd id="week-expenses">–</dd></div>
-            <div><dt>Udhaar collected</dt><dd id="week-collected">–</dd></div>
+            <div><dt data-en="Credit collected">Udhaar collected</dt><dd id="week-collected">–</dd></div>
           </dl>
           <ul class="legend" aria-hidden="true">
             <li><i class="swatch swatch-sales"></i>Sales</li>
@@ -127,7 +128,7 @@
 
         <div class="book-main">
           <div class="tabs" role="tablist" aria-label="Shop book">
-            <button type="button" role="tab" id="tab-udhaar" aria-controls="panel-udhaar" aria-selected="true">Udhaar <span class="count" id="count-udhaar"></span></button>
+            <button type="button" role="tab" id="tab-udhaar" aria-controls="panel-udhaar" aria-selected="true"><span data-en="Credit">Udhaar</span> <span class="count" id="count-udhaar"></span></button>
             <button type="button" role="tab" id="tab-stock" aria-controls="panel-stock" aria-selected="false" tabindex="-1">Stock <span class="count" id="count-stock"></span></button>
             <button type="button" role="tab" id="tab-entries" aria-controls="panel-entries" aria-selected="false" tabindex="-1">Entries</button>
             <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">Orders</button>

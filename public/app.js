@@ -1,6 +1,7 @@
 import { romanize } from "/romanize.js";
 import { downsample, encodeWav, mergeChunks, rms } from "/audio.js";
 import { safeUrl } from "/book.js";
+import { pick, onLang } from "/lang.js";
 
 const COPY = {
   tapToSpeak: "Tap the mic and speak",
@@ -12,13 +13,13 @@ const COPY = {
   soundOn: "Spoken replies are on",
   soundOff: "Spoken replies are off",
   noSpeech: "Didn't catch that. Please try again.",
-  micSilent: "Mic se koi awaaz nahi aayi. Check the right microphone is selected and not muted, or type below.",
+  get micSilent() { return pick("Mic se koi awaaz nahi aayi. Check the right microphone is selected and not muted, or type below.", "No sound came from the mic. Check the right microphone is selected and not muted, or type below."); },
   micBlocked: "Microphone is blocked. Allow it in browser settings, or type below.",
   noMic: "Voice needs Chrome or Edge. You can type below.",
   speechFailed: "Couldn't make that out. Please type it.",
-  noMicFound: "Browser ko mic nahi mila. Open Mic check below to pick your microphone.",
+  get noMicFound() { return pick("Browser ko mic nahi mila. Open Mic check below to pick your microphone.", "The browser couldn't find a mic. Open Mic check below to pick your microphone."); },
   browserSpeechOffline: "Browser speech needs internet. Use Gnani mic, or check your connection.",
-  micCheckSilent: "Is mic se koi awaaz nahi aa rahi. Pick another mic above, or check it isn't muted (Windows Settings > System > Sound > Input).",
+  get micCheckSilent() { return pick("Is mic se koi awaaz nahi aa rahi. Pick another mic above, or check it isn't muted (Windows Settings > System > Sound > Input).", "No sound is coming from this mic. Pick another mic above, or check it isn't muted (Windows Settings > System > Sound > Input)."); },
   micCheckWorking: "Mic is working. Speak and watch the bar.",
   micCheckWaiting: "Speak now and watch the bar…",
   offline: "Couldn't reach the server. Please try again.",
@@ -36,7 +37,10 @@ const entryKind = (summary) => ENTRY_KINDS.find(([re]) => re.test(summary))?.[1]
 // mixed speech best; what it hears is shown in Roman letters.
 const SPEECH_LANG = { hinglish: "hi-IN", english: "en-IN" };
 // These all work in demo mode as well as with the real assistant.
-const CHIPS = ["Ramesh ko 500 udhaar diya", "300 ka kharcha", "Aaj ka hisaab", "Kitna udhaar baaki hai?"];
+const chips = () => pick(
+  ["Ramesh ko 500 udhaar diya", "300 ka kharcha", "Aaj ka hisaab", "Kitna udhaar baaki hai?"],
+  ["Gave Ramesh 500 on credit", "Spent 300", "Today's summary", "How much credit is pending?"],
+);
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -61,8 +65,10 @@ const voiceAvailable = () => listenEngine === "gnani" || Boolean(Recognition);
 
 /* ---------- Rendering ---------- */
 
+onLang(() => renderChips());
+
 function renderChips() {
-  els.chips.replaceChildren(...CHIPS.map((text) => {
+  els.chips.replaceChildren(...chips().map((text) => {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "chip";
