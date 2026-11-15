@@ -1,4 +1,4 @@
-# Countr
+# Counterbook
 
 **Live:** https://countr-qb4l.onrender.com · **One-page pitch:** [PITCH.md](PITCH.md)
 
@@ -6,7 +6,7 @@ A voice-first AI assistant for small business owners in India. The owner talks o
 
 Beside the assistant, the **shop book** shows the last 7 days, who owes what (with a Remind button), stock levels, every entry with its bill, open orders and bookings, and the shop's details and data downloads.
 
-"Countr": the shop counter that listens, and counts every rupee.
+"Counterbook": the shop counter that listens, and counts every rupee.
 
 ## Run it
 
@@ -41,7 +41,7 @@ The repository includes a [Render](https://render.com) blueprint, [render.yaml](
 
 **Vercel front (optional).** [vercel.json](vercel.json) serves the pages from `public/` on Vercel and passes `/api/*` and `/bill/*` through to the Render service, so the site has one address and the sign-in cookie still works. Import the repository on Vercel with no settings to change; if the Render address changes, update it in `vercel.json`.
 
-The blueprint uses Render's free plan. The free plan has no disk, so every restart or redeploy wipes registered shops (the demo shop is always rebuilt with sample data); that's fine for a demo, not for real shops. For real shops, switch to the Starter plan and attach a 1 GB disk at `/var/data` with `COUNTR_DATA_DIR=/var/data`, as the comment in `render.yaml` shows. A free service also sleeps after 15 minutes idle, so the first visit after that takes about a minute. The server listens on `0.0.0.0` there (`COUNTR_HOST`), answers health checks at `/healthz`, and marks its sign-in cookie `Secure` when served over HTTPS.
+The blueprint uses Render's free plan. The free plan has no disk, so every restart or redeploy wipes registered shops (the demo shop is always rebuilt with sample data); that's fine for a demo, not for real shops. For real shops, switch to the Starter plan and attach a 1 GB disk at `/var/data` with `COUNTERBOOK_DATA_DIR=/var/data`, as the comment in `render.yaml` shows. A free service also sleeps after 15 minutes idle, so the first visit after that takes about a minute. The server listens on `0.0.0.0` there (`COUNTERBOOK_HOST`), answers health checks at `/healthz`, and marks its sign-in cookie `Secure` when served over HTTPS.
 
 ## Shop accounts
 
@@ -49,7 +49,7 @@ Each shop owner registers with the shop's name, their name, a mobile number and 
 
 **Try the demo shop** opens a shared, made-up kirana store with sample data, without registering. Anyone using it sees the same books.
 
-The older one-shop setup (one database, optional PIN) is still there with `COUNTR_SINGLE_SHOP=1`.
+The older one-shop setup (one database, optional PIN) is still there with `COUNTERBOOK_SINGLE_SHOP=1`.
 
 Your own `.env` (API keys) and `data/` (all shops' books) are never committed, so each person keeps their own.
 
@@ -63,19 +63,19 @@ To go live, create a `.env` file from `.env.example`, add a key and restart. The
 | `ANTHROPIC_API_KEY` | The assistant, on Claude | [console.anthropic.com](https://console.anthropic.com) | Paid, per use |
 | `GNANI_API_KEY` | Voice in and out ([Gnani](https://docs.gnani.ai/api/introduction/introduction) Prisma and Timbre) | [app.gnani.ai/voice](https://app.gnani.ai/voice/) | Optional; without it the browser's built-in speech is used |
 
-With both AI keys set, Claude is used unless `COUNTR_PROVIDER=gemini`. The terminal says which AI and voice are active when the server starts. Keys stay on the server and never reach the browser. Each AI keeps its own conversation history, so switching between them is safe; the ledger itself is shared.
+With both AI keys set, Claude is used unless `COUNTERBOOK_PROVIDER=gemini`. The terminal says which AI and voice are active when the server starts. Keys stay on the server and never reach the browser. Each AI keeps its own conversation history, so switching between them is safe; the ledger itself is shared.
 
 Other settings, all optional:
 
 | Setting | What it does |
 |---|---|
-| `COUNTR_HOST` | Where the server listens. Default `127.0.0.1` (this computer only). Set `0.0.0.0` to reach it from a phone on the same Wi-Fi; shops sign in as usual. |
-| `COUNTR_SINGLE_SHOP`, `COUNTR_PIN` | `COUNTR_SINGLE_SHOP=1` runs one shop without accounts; `COUNTR_PIN` then locks it (required to listen beyond this computer). |
-| `COUNTR_DATA_DIR` | Where accounts and every shop's books live. Default `data/`. |
-| `COUNTR_PROVIDER` | `gemini` or `claude`, when both keys are set. |
+| `COUNTERBOOK_HOST` | Where the server listens. Default `127.0.0.1` (this computer only). Set `0.0.0.0` to reach it from a phone on the same Wi-Fi; shops sign in as usual. |
+| `COUNTERBOOK_SINGLE_SHOP`, `COUNTERBOOK_PIN` | `COUNTERBOOK_SINGLE_SHOP=1` runs one shop without accounts; `COUNTERBOOK_PIN` then locks it (required to listen beyond this computer). |
+| `COUNTERBOOK_DATA_DIR` | Where accounts and every shop's books live. Default `data/`. |
+| `COUNTERBOOK_PROVIDER` | `gemini` or `claude`, when both keys are set. |
 | `GEMINI_MODEL`, `GEMINI_THINKING` | Gemini model (default `gemini-3.5-flash-lite`; `gemini-3.8-flash` is newer but was often overloaded in testing) and thinking level (`minimal`, `low`, `medium`, `high`). |
-| `COUNTR_MODEL`, `COUNTR_EFFORT` | Claude model and effort (`low`, `medium`, `high`, `xhigh`, `max`). An invalid effort falls back to `medium` with a warning. |
-| `COUNTR_DB`, `COUNTR_BACKUP_DIR` | Where the database and its daily backups live. Default `data/countr.db` and `data/backups/`. |
+| `COUNTERBOOK_MODEL`, `COUNTERBOOK_EFFORT` | Claude model and effort (`low`, `medium`, `high`, `xhigh`, `max`). An invalid effort falls back to `medium` with a warning. |
+| `COUNTERBOOK_DB`, `COUNTERBOOK_BACKUP_DIR` | Where the database and its daily backups live. Default `data/counterbook.db` and `data/backups/`. |
 | `PORT` | Default 3000. |
 
 Run the tests:
@@ -102,11 +102,20 @@ npm test
 - "Mera GST number 07ABCDE1234F1Z5 hai, aur UPI sharmastore@okaxis"
 - "Pichli sale ka bill dikhao"
 
+## Nightly hisaab call
+
+Other apps wait for the owner to open them; Counterbook calls. At closing time (9 PM unless changed) the dashboard rings like an incoming call, and answering reads out the day: sales, spending and udhaar collected, the three people to collect from tomorrow, orders and deliveries due (including any already late), and low stock. It speaks in Gnani's voice when `GNANI_API_KEY` is set, otherwise the browser's, with the words on screen. It follows the site's Hinglish/English switch.
+
+- **Settings:** *Shop & data* tab → *Raat ka hisaab call*. Turn it on or off and pick the time; it's saved with the shop.
+- **Try it any time:** the *Abhi call karo* (Call me now) button there rings straight away.
+- **When it rings:** at the set time if the dashboard is open, or as soon as it's opened within 3 hours of that time, once a day. In a background tab it also shows a notification, if the browser was allowed to.
+- **Not yet a real phone call.** Calling a mobile number needs a telephony service (for example Exotel or Twilio). The script is already served at `GET /api/briefing?lang=hinglish|english`, ready to be read out over one.
+
 ## Your data
 
 - **Daily backups.** Each day the server saves a copy to `data/backups/` and keeps the last 14. `npm run backup` makes one immediately.
 - **Downloads.** The shop book's *Shop & data* tab downloads the ledger, customers and stock as CSV (opens in Excel or Google Sheets), or the whole database as a backup file.
-- **Restore.** Stop the server, copy a backup over `data/countr.db`, delete any `countr.db-wal` and `countr.db-shm` next to it, and start again.
+- **Restore.** Stop the server, copy a backup over `data/counterbook.db`, delete any `counterbook.db-wal` and `counterbook.db-shm` next to it, and start again.
 
 ## How it's put together
 
@@ -120,6 +129,8 @@ npm test
 | [src/accounts.js](src/accounts.js) | Shop accounts: registration, hashed passwords, sessions |
 | [src/documents.js](src/documents.js) | Printable bills (with GST) and CSV exports |
 | [src/backup.js](src/backup.js) | Daily database backups |
+| [src/briefing.js](src/briefing.js) | What the nightly call says, worked out from the shop's books |
+| [public/call.js](public/call.js) | The nightly call: rings at closing time, then reads the day aloud |
 | [public/book.js](public/book.js) | The shop book: 7-day chart, udhaar, stock, entries, orders, settings |
 | [src/gnani.js](src/gnani.js) | Gnani Prisma speech-to-text and Timbre text-to-speech |
 | [public/audio.js](public/audio.js) | Turns microphone samples into the WAV files Gnani accepts |
@@ -132,7 +143,7 @@ npm test
 Decisions worth knowing before you change things:
 
 - **Money is whole paise, and balances are never stored.** A customer's udhaar is always calculated from the ledger, so it can't drift out of step. Stock works the same way: quantity on hand is the sum of stock movements, so undoing a sale puts the items back.
-- **Countr never sends anything itself.** Reminders and bills become WhatsApp links the owner taps to send from their own phone, and payments are UPI links the customer's app opens.
+- **Counterbook never sends anything itself.** Reminders and bills become WhatsApp links the owner taps to send from their own phone, and payments are UPI links the customer's app opens.
 - **Writes happen straight away, with Undo.** Asking for confirmation on every voice entry would be tiresome, so each entry shows a card with an Undo button and the assistant reads back what it recorded. Nothing is deleted: undo marks rows as voided.
 - **The model never does the arithmetic.** Figures come from tools, which also refuse unsafe guesses: an ambiguous name returns the candidates, and a payment from an unknown customer is rejected.
 - **Conversation history is append-only**, because replayed thinking blocks are only valid against unchanged history. A new thread starts each day (India time). Longer-term memory comes from the ledger, saved notes and a recent-activity list in the context block.
@@ -152,5 +163,5 @@ This is built to run on the shop's own computer, not as an online service.
 - **Without a Gnani key, voice falls back to the browser's speech features**, which work best in Chrome and Edge.
 - **Data leaves this computer.** Messages, plus the business data the assistant looks up, go to the Anthropic API. Voice recordings, reply text and customer names go to Gnani. Check this suits your customers' data and India's DPDP Act before real use.
 - **GST is basic.** Bills show CGST and SGST for an intra-state sale at one rate per sale, with the amount treated as GST-inclusive. There's no IGST, HSN codes or GST return filing; check bills with your CA before relying on them as tax invoices.
-- **Payments aren't confirmed automatically.** The UPI link fills in the amount, but the owner still tells Countr when money arrives.
+- **Payments aren't confirmed automatically.** The UPI link fills in the amount, but the owner still tells Counterbook when money arrives.
 - **Accounting figures are simple.** "Sales minus expenses" isn't profit in the accounting sense, since stock purchases count as expenses when they happen.

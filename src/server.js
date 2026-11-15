@@ -1,4 +1,4 @@
-import "./env.js";
+import { singleShopDbPath } from "./env.js";
 import { createServer } from "node:http";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -17,6 +17,7 @@ import { dailyBackup } from "./backup.js";
 import { openAccounts, AccountError, DEMO_SHOP_ID, normalizePhone } from "./accounts.js";
 import { seedSample } from "./seed.js";
 import { wavLevels, normalizeWav } from "./wav.js";
+import { briefingFacts, briefingScript, isCallTime, DEFAULT_CALL_TIME } from "./briefing.js";
 import { romanize } from "../public/romanize.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,6 +29,7 @@ const PUBLIC_FILES = {
   "/login.js": ["login.js", "text/javascript; charset=utf-8"],
   "/app.js": ["app.js", "text/javascript; charset=utf-8"],
   "/book.js": ["book.js", "text/javascript; charset=utf-8"],
+  "/call.js": ["call.js", "text/javascript; charset=utf-8"],
   "/romanize.js": ["romanize.js", "text/javascript; charset=utf-8"],
   "/audio.js": ["audio.js", "text/javascript; charset=utf-8"],
   "/motion.js": ["motion.js", "text/javascript; charset=utf-8"],
@@ -43,7 +45,7 @@ const MAX_TEXT_CHARS = 4000;
 const MAX_AUDIO_BYTES = 2 * 1024 * 1024; // comfortably over 30 seconds of 16 kHz WAV, Prisma's limit
 const MAX_SPOKEN_CHARS = 1500;
 const LOCAL_HOST = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
-const SESSION_COOKIE = "countr_session";
+const SESSION_COOKIE = "counterbook_session";
 const SESSION_DAYS = 30;
 const MAX_FAILED_LOGINS = 5;
 const LOCKOUT_MS = 60_000;
@@ -56,14 +58,14 @@ function friendlyError(err) {
     return "API key sahi nahi hai. The API key isn't working; check ANTHROPIC_API_KEY in .env.";
   }
   if (err instanceof Anthropic.BadRequestError || err instanceof Anthropic.NotFoundError) {
-    return "AI settings mein gadbad hai. The AI request was rejected; check COUNTR_MODEL in .env, or remove it to use the default.";
+    return "AI settings mein gadbad hai. The AI request was rejected; check COUNTERBOOK_MODEL in .env, or remove it to use the default.";
   }
   if (err instanceof Anthropic.RateLimitError) return "Abhi bahut requests hain, thodi der mein try kijiye. Too many requests, please try again shortly.";
   if (err instanceof Anthropic.APIConnectionError) return "Internet connection nahi mil raha. Can't reach the AI service, please check your connection.";
   return "Kuch gadbad ho gayi, please dobara try kijiye. Something went wrong, please try again.";
 }
 
-const hashPin = (pin) => createHash("sha256").update(`countr:${pin}`).digest();
+const hashPin = (pin) => createHash("sha256").update(`counterbook:${pin}`).digest();
 
 function readCookie(req, name) {
   for (const part of (req.headers.cookie ?? "").split(";")) {
@@ -239,6 +241,7 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
       account: who.shop,
       voice: gnani ? "gnani" : "browser",
       business: who.tools.profile(),
+      call: callSettings(who),
       glance: who.tools.glance(),
       messages: rows.map((r) => ({
         role: r.role, text: r.text,
@@ -317,6 +320,29 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
     }
   }
 
+  /* ---------- The nightly hisaab call ---------- */
+
+  function callSettings(who) {
+    const row = who.db.prepare("SELECT call_enabled, call_time FROM business WHERE id = 1").get();
+    return { enabled: row.call_enabled !== 0, time: row.call_time || DEFAULT_CALL_TIME };
+  }
+
+  function briefing(res, who, lang) {
+    const profile = who.tools.profile();
+    const owner = profile.owner_name || who.shop?.owner_name || "";
+    const facts = briefingFacts(who.tools);
+    const script = briefingScript(facts, { owner, lang: lang === "english" ? "english" : "hinglish" });
+    json(res, 200, { ...script, facts, call: callSettings(who) });
+  }
+
+  async function saveCallSettings(req, res, who) {
+    const body = await readJson(req);
+    if (typeof body.enabled !== "boolean") throw new HttpError(400, "enabled must be true or false");
+    if (!isCallTime(body.time)) throw new HttpError(400, "time must be HH:MM, 24-hour");
+    who.db.prepare("UPDATE business SET call_enabled = ?, call_time = ? WHERE id = 1").run(body.enabled ? 1 : 0, body.time);
+    json(res, 200, { call: callSettings(who) });
+  }
+
   async function saveProfile(req, res, who) {
     const body = await readJson(req);
     const fields = {};
@@ -340,20 +366,20 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
     if (!rows) throw new HttpError(404, "Not found");
     res.writeHead(200, {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="countr-${kind}-${who.tools.today()}.csv"`,
+      "Content-Disposition": `attachment; filename="counterbook-${kind}-${who.tools.today()}.csv"`,
       "Cache-Control": "no-store",
     });
     res.end(toCsv(rows));
   }
 
   async function downloadBackup(res, who) {
-    const file = join(tmpdir(), `countr-download-${randomBytes(8).toString("hex")}.db`);
+    const file = join(tmpdir(), `counterbook-download-${randomBytes(8).toString("hex")}.db`);
     try {
       backupTo(who.db, file);
       const data = await readFile(file);
       res.writeHead(200, {
         "Content-Type": "application/vnd.sqlite3",
-        "Content-Disposition": `attachment; filename="countr-backup-${who.tools.today()}.db"`,
+        "Content-Disposition": `attachment; filename="counterbook-backup-${who.tools.today()}.db"`,
         "Cache-Control": "no-store",
       });
       res.end(data);
@@ -409,6 +435,8 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
       if (req.method === "GET" && pathname === "/api/overview") return json(res, 200, who.tools.overview());
       if (req.method === "POST" && pathname === "/api/chat") return await chat(req, res, who);
       if (req.method === "POST" && pathname === "/api/profile") return await saveProfile(req, res, who);
+      if (req.method === "GET" && pathname === "/api/briefing") return briefing(res, who, searchParams.get("lang"));
+      if (req.method === "POST" && pathname === "/api/briefing/settings") return await saveCallSettings(req, res, who);
       if (req.method === "POST" && pathname === "/api/speech/transcribe") return await transcribe(req, res, searchParams.get("mode"), who);
       if (req.method === "POST" && pathname === "/api/speech/speak") return await speak(req, res);
       if (req.method === "GET" && pathname === "/api/backup") return await downloadBackup(res, who);
@@ -436,7 +464,7 @@ export function createApp({ db = null, accounts = null, client, demo, gnani = nu
   /** Every shop's database that is open or registered, for the daily backups. */
   handler.shopDatabases = () => (accounts
     ? accounts.allShopIds().map((id) => [id, contextFor(id).db])
-    : [["countr", single.db]]);
+    : [["counterbook", single.db]]);
   /** Closes every shop database this app opened. */
   handler.close = () => {
     for (const ctx of shops.values()) ctx.db.close();
@@ -453,37 +481,37 @@ class HttpError extends Error {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  // Which AI runs the assistant: COUNTR_PROVIDER if set, otherwise whichever key is present.
+  // Which AI runs the assistant: COUNTERBOOK_PROVIDER if set, otherwise whichever key is present.
   const hasClaude = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
   const hasGemini = Boolean(process.env.GEMINI_API_KEY?.trim());
-  const wanted = process.env.COUNTR_PROVIDER?.trim().toLowerCase();
+  const wanted = process.env.COUNTERBOOK_PROVIDER?.trim().toLowerCase();
   const provider = wanted === "gemini" && hasGemini ? "gemini"
     : wanted === "claude" && hasClaude ? "claude"
       : hasClaude ? "claude" : hasGemini ? "gemini" : "demo";
-  if (wanted && wanted !== provider) console.warn(`COUNTR_PROVIDER=${wanted}, but its API key isn't set. Using ${provider}.`);
+  if (wanted && wanted !== provider) console.warn(`COUNTERBOOK_PROVIDER=${wanted}, but its API key isn't set. Using ${provider}.`);
   const geminiModel = process.env.GEMINI_MODEL?.trim() || GEMINI_DEFAULT_MODEL;
   const hasCredentials = provider !== "demo";
   const client = provider === "claude" ? new Anthropic()
     : provider === "gemini" ? createGeminiClient({ apiKey: process.env.GEMINI_API_KEY.trim(), model: geminiModel, thinking: process.env.GEMINI_THINKING?.trim() || null })
       : createDemoClient();
 
-  // Shop accounts are the default. COUNTR_SINGLE_SHOP=1 keeps the older one-shop setup (data/countr.db).
-  const singleShop = process.env.COUNTR_SINGLE_SHOP === "1";
-  const dataDir = process.env.COUNTR_DATA_DIR || join(ROOT, "data");
-  const dbPath = process.env.COUNTR_DB || join(dataDir, "countr.db");
+  // Shop accounts are the default. COUNTERBOOK_SINGLE_SHOP=1 keeps the older one-shop setup (data/counterbook.db).
+  const singleShop = process.env.COUNTERBOOK_SINGLE_SHOP === "1";
+  const dataDir = process.env.COUNTERBOOK_DATA_DIR || join(ROOT, "data");
+  const dbPath = process.env.COUNTERBOOK_DB || singleShopDbPath(dataDir);
   const accounts = singleShop ? null : openAccounts(dataDir);
   const db = singleShop ? openDb(dbPath) : null;
 
   const port = Number(process.env.PORT) || 3000;
-  const pin = singleShop ? process.env.COUNTR_PIN?.trim() || null : null;
-  const host = process.env.COUNTR_HOST?.trim() || "127.0.0.1";
+  const pin = singleShop ? process.env.COUNTERBOOK_PIN?.trim() || null : null;
+  const host = process.env.COUNTERBOOK_HOST?.trim() || "127.0.0.1";
   const loopback = ["127.0.0.1", "localhost", "::1"].includes(host);
   if (pin && pin.length < 4) {
-    console.error("COUNTR_PIN must be at least 4 characters.");
+    console.error("COUNTERBOOK_PIN must be at least 4 characters.");
     process.exit(1);
   }
   if (singleShop && !loopback && !pin) {
-    console.error(`Refusing to listen on ${host} without COUNTR_PIN: anyone on the network could read and change the books. Set COUNTR_PIN in .env.`);
+    console.error(`Refusing to listen on ${host} without COUNTERBOOK_PIN: anyone on the network could read and change the books. Set COUNTERBOOK_PIN in .env.`);
     process.exit(1);
   }
   const gnani = process.env.GNANI_API_KEY
@@ -494,7 +522,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const app = createApp({ db, accounts, client, demo: !hasCredentials, gnani, pin, lastSpeechPath });
 
   // A copy of every shop's books each day, in its own folder.
-  const backupDir = process.env.COUNTR_BACKUP_DIR || join(dataDir, "backups");
+  const backupDir = process.env.COUNTERBOOK_BACKUP_DIR || join(dataDir, "backups");
   const backUp = () => {
     for (const [id, shopDb] of app.shopDatabases()) {
       try {
@@ -509,7 +537,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   setInterval(backUp, 60 * 60 * 1000).unref();
 
   createServer(app).listen(port, host, () => {
-    console.log(`Countr is running at http://${loopback ? "localhost" : host}:${port}`);
+    console.log(`Counterbook is running at http://${loopback ? "localhost" : host}:${port}`);
     console.log(singleShop ? "Single shop mode." : "Shop accounts: each shop registers and signs in with its own books.");
     if (provider === "claude") console.log("AI: Claude.");
     if (provider === "gemini") console.log(`AI: Google Gemini (${geminiModel}).`);

@@ -10,7 +10,7 @@ import { createApp } from "../src/server.js";
 import { createDemoClient } from "../src/demo.js";
 
 function tempDir() {
-  return mkdtempSync(join(tmpdir(), "countr-accounts-"));
+  return mkdtempSync(join(tmpdir(), "counterbook-accounts-"));
 }
 
 /** A running app in accounts mode. Each `as()` is a separate browser with its own cookie. */

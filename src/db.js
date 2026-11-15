@@ -127,6 +127,9 @@ const ADDED_COLUMNS = [
   ["business", "address", "TEXT"],
   ["business", "gstin", "TEXT"],
   ["business", "upi_id", "TEXT"],
+  // The nightly hisaab call: on unless the owner turns it off; NULL time means the default (21:00).
+  ["business", "call_enabled", "INTEGER NOT NULL DEFAULT 1"],
+  ["business", "call_time", "TEXT"],
   ["transactions", "gst_rate", "REAL"],
   ["chat_log", "links", "TEXT NOT NULL DEFAULT '[]'"],
   ["threads", "provider", "TEXT NOT NULL DEFAULT 'anthropic'"],

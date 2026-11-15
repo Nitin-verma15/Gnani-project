@@ -2,11 +2,11 @@ import { tx } from "./db.js";
 import { TOOL_DEFINITIONS } from "./tools.js";
 import { romanize } from "../public/romanize.js";
 
-export const MODEL = process.env.COUNTR_MODEL?.trim() || "claude-opus-5-5";
+export const MODEL = process.env.COUNTERBOOK_MODEL?.trim() || "claude-opus-5-5";
 const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"];
-export const EFFORT = EFFORT_LEVELS.includes(process.env.COUNTR_EFFORT?.trim()) ? process.env.COUNTR_EFFORT.trim() : "medium";
-if (process.env.COUNTR_EFFORT && process.env.COUNTR_EFFORT.trim() !== EFFORT) {
-  console.warn(`COUNTR_EFFORT="${process.env.COUNTR_EFFORT}" isn't one of ${EFFORT_LEVELS.join(", ")}; using "${EFFORT}".`);
+export const EFFORT = EFFORT_LEVELS.includes(process.env.COUNTERBOOK_EFFORT?.trim()) ? process.env.COUNTERBOOK_EFFORT.trim() : "medium";
+if (process.env.COUNTERBOOK_EFFORT && process.env.COUNTERBOOK_EFFORT.trim() !== EFFORT) {
+  console.warn(`COUNTERBOOK_EFFORT="${process.env.COUNTERBOOK_EFFORT}" isn't one of ${EFFORT_LEVELS.join(", ")}; using "${EFFORT}".`);
 }
 // Server-side refusal fallback ("default" routing) is only accepted by these models.
 const FALLBACK_MODELS = ["claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"];
@@ -14,7 +14,7 @@ export const USES_FALLBACK = FALLBACK_MODELS.includes(MODEL);
 const MAX_STEPS = 10;
 const MAX_THREAD_MESSAGES = 300;
 
-export const SYSTEM_PROMPT = `You are Countr, the AI assistant at the centre of a small Indian business. The owner, who may not be comfortable with technology, runs their shop through talking to you instead of using registers, forms or dashboards.
+export const SYSTEM_PROMPT = `You are Counterbook, the AI assistant at the centre of a small Indian business. The owner, who may not be comfortable with technology, runs their shop through talking to you instead of using registers, forms or dashboards.
 
 Language
 - Reply in the language the owner is using: English, Hindi or Hinglish. Switch whenever they switch.

@@ -5,10 +5,12 @@
 # shops are lost when the service restarts or redeploys (the demo shop is always rebuilt).
 # To keep shops for good: change plan to starter and add the disk below.
 #   plan: starter
-#   envVars: COUNTR_DATA_DIR = /var/data
-#   disk: { name: countr-data, mountPath: /var/data, sizeGB: 1 }
+#   envVars: COUNTERBOOK_DATA_DIR = /var/data
+#   disk: { name: counterbook-data, mountPath: /var/data, sizeGB: 1 }
 services:
   - type: web
+    # Kept from before the rename: Render made the live address (countr-qb4l.onrender.com)
+    # from it, and changing it here would create a second service. Rename it in Render instead.
     name: countr
     runtime: node
     plan: free
@@ -18,7 +20,7 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
-      - key: COUNTR_HOST
+      - key: COUNTERBOOK_HOST
         value: 0.0.0.0        # accept the hosting provider's traffic; shops still sign in
       - key: GEMINI_API_KEY
         sync: false           # Render asks for the value; it never goes in the repository
